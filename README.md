@@ -93,7 +93,8 @@ components in `src/components/layout`, and cross-cutting server utilities in
 initialized app across Next.js development reloads.
 
 The document editor stores Tiptap JSON, while sharing stores stable demo-user
-IDs on each document. Shared users can edit; only owners can grant access.
+IDs on each document. Editors can edit; viewers are read-only; only owners can
+grant access.
 Additional layers and dependencies should be introduced only when an actual
 assessment requirement gives them a clear responsibility.
 
@@ -102,4 +103,4 @@ assessment requirement gives them a clear responsibility.
 - [Architecture note](docs/ARCHITECTURE.md)
 - [AI workflow note](docs/AI_WORKFLOW.md)
 - [Submission manifest](SUBMISSION.md)
-- [Walkthrough URL placeholder](WALKTHROUGH_URL.txt)
+- [Walkthrough URL file](WALKTHROUGH_URL.txt)

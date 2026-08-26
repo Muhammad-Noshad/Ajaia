@@ -39,6 +39,18 @@ AI-generated code was checked with:
 - Live API smoke tests against the configured Cloud Firestore database
 - Manual reviewer-flow testing before submission
 
-Before submitting, update this note with any additional AI suggestions that were
-changed or rejected, the final deployment smoke-test result, and the specific
-prompts that materially influenced the implementation.
+## Representative workflow prompts
+
+- Extract the assessment requirements and separate must-have functionality from
+  optional stretch work.
+- Design and implement the document editor, Firestore persistence, sharing
+  permissions, import flow, history, comments, and exports incrementally.
+- Audit responsive behavior and verify the final implementation against the
+  assessment checklist.
+
+## Final verification status
+
+Local tests, lint, TypeScript, and the production build pass. The live Vercel
+URL responds successfully and serves the Ajaia Docs metadata. A complete
+deployed reviewer-flow smoke test, walkthrough video, and final submission
+folder remain external delivery tasks rather than code changes.

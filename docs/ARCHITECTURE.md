@@ -116,4 +116,6 @@ legacy documents without `sharedRoles`, existing shared users default to
 - ESLint and TypeScript are run after each implementation slice.
 - Manual verification covers create/edit/save/reload, formatting persistence,
   import validation, sharing, user switching, and unauthorized access.
-- Deployment verification must repeat the reviewer flow against Firestore/Vercel.
+- The deployed URL responds successfully at
+  `https://ajaiadocs-three.vercel.app/`; the complete reviewer flow should be
+  repeated against the deployed Firestore/Vercel environment before submission.
