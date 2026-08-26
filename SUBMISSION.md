@@ -11,13 +11,12 @@ external submission items for Ajaia Docs.
 - [x] `docs/AI_WORKFLOW.md`
 - [x] `SUBMISSION.md`
 - [x] Live product URL: [https://ajaiadocs-three.vercel.app/](https://ajaiadocs-three.vercel.app/)
-- [ ] Public 3-5 minute walkthrough video URL
-- [ ] `WALKTHROUGH_URL.txt` updated with the final video URL
-- [ ] Google Drive folder link
-- [ ] Screenshots or demo GIF, if reviewer setup needs them
+- [x] Public 3-5 minute walkthrough video URL: https://www.loom.com/share/2531b12c98564acea8d7d9d8d0c50c33
+- [x] `WALKTHROUGH_URL.txt` updated with the final video URL
+- [x] Google Drive source archive: [Download code ZIP](https://drive.google.com/file/d/1CwPLGv9HZY0somZJyghXOe7kgmFwLUgx/view?usp=sharing)
 
-The live product is available at the URL above. The video URL and Drive folder
-cannot be completed from the codebase and must be added before submission.
+The live product and walkthrough are available at the URLs above. The Google
+Drive submission folder link must still be added before submission.
 
 ## Reviewer access
 
