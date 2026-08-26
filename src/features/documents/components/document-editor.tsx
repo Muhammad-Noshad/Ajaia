@@ -83,8 +83,8 @@ export function DocumentEditor({
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col bg-card">
-      <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6">
         <label className="sr-only" htmlFor="document-title">
           Document title
         </label>
@@ -127,8 +127,10 @@ export function DocumentEditor({
           </Button>
         </div>
       </header>
-      <DocumentToolbar editor={editor} />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="shrink-0">
+        <DocumentToolbar editor={editor} />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <EditorContent editor={editor} />
       </div>
     </section>
