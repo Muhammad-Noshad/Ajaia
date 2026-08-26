@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Loader2, Save, Share2 } from "lucide-react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -17,6 +17,23 @@ type DocumentEditorProps = {
   onShare: () => void;
 };
 
+type SaveOptions = {
+  notify?: boolean;
+};
+
+const AUTOSAVE_DELAY_MS = 1200;
+
+function formatSavedTime(savedAt: Date | null) {
+  if (!savedAt || Number.isNaN(savedAt.getTime())) {
+    return "Saved";
+  }
+
+  return `Saved at ${savedAt.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  })}`;
+}
+
 // This component owns only transient editor/title state. The parent owns the
 // selected document, and the server remains the source of truth after saving.
 export function DocumentEditor({
@@ -28,6 +45,14 @@ export function DocumentEditor({
   const [title, setTitle] = useState(document.title);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [changeVersion, setChangeVersion] = useState(0);
+  const [lastSavedAt, setLastSavedAt] = useState(
+    () => new Date(document.updatedAt),
+  );
+  const changeVersionRef = useRef(0);
+  const lastAutosavedVersionRef = useRef(-1);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const editor = useEditor({
     extensions: [StarterKit],
@@ -40,46 +65,106 @@ export function DocumentEditor({
         "aria-label": "Document content",
       },
     },
-    onUpdate: () => setIsDirty(true),
+    onUpdate: () => {
+      changeVersionRef.current += 1;
+      setChangeVersion(changeVersionRef.current);
+      setIsDirty(true);
+      setSaveError(null);
+    },
   });
 
-  async function saveDocument() {
-    if (!editor || isSaving) {
+  const saveDocument = useCallback(
+    async function saveDocument({ notify = true }: SaveOptions = {}) {
+      if (!editor || isSaving || !isDirty) {
+        return;
+      }
+
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+
+      const requestVersion = changeVersionRef.current;
+      setIsSaving(true);
+      setSaveError(null);
+
+      try {
+        const response = await fetch(`/api/documents/${document.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim() || "Untitled document",
+            content: editor.getJSON(),
+          }),
+        });
+
+        const result = (await response.json()) as {
+          document?: DocumentView;
+          error?: string;
+        };
+
+        if (!response.ok || !result.document) {
+          throw new Error(result.error ?? "Unable to save document");
+        }
+
+        // A user may continue typing while the request is in flight. Only
+        // clear the dirty state when the response represents the latest edit;
+        // otherwise the next autosave must preserve the newer local changes.
+        const hasNewerChanges = changeVersionRef.current !== requestVersion;
+        if (!hasNewerChanges) {
+          setTitle(result.document.title);
+          setIsDirty(false);
+          setLastSavedAt(new Date(result.document.updatedAt));
+          onSaved(result.document);
+        }
+
+        if (notify) {
+          toast.success("Document saved");
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to save document";
+        setSaveError(message);
+        toast.error(message);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [document.id, editor, isDirty, isSaving, onSaved, title],
+  );
+
+  // Debounce autosave by edit version rather than only dirty state. This makes
+  // edits during a request observable and prevents a failed version from
+  // retrying forever without a new user action.
+  useEffect(() => {
+    if (
+      !editor ||
+      !isDirty ||
+      isSaving ||
+      changeVersion === lastAutosavedVersionRef.current
+    ) {
       return;
     }
 
-    setIsSaving(true);
+    autosaveTimerRef.current = setTimeout(() => {
+      autosaveTimerRef.current = null;
+      lastAutosavedVersionRef.current = changeVersion;
+      void saveDocument({ notify: false });
+    }, AUTOSAVE_DELAY_MS);
 
-    try {
-      const response = await fetch(`/api/documents/${document.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim() || "Untitled document",
-          content: editor.getJSON(),
-        }),
-      });
-
-      const result = (await response.json()) as {
-        document?: DocumentView;
-        error?: string;
-      };
-
-      if (!response.ok || !result.document) {
-        throw new Error(result.error ?? "Unable to save document");
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
       }
+    };
+  }, [changeVersion, editor, isDirty, isSaving, saveDocument]);
 
-      setTitle(result.document.title);
-      setIsDirty(false);
-      onSaved(result.document);
-      toast.success("Document saved");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Unable to save document",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+  function markDirty() {
+    changeVersionRef.current += 1;
+    setChangeVersion(changeVersionRef.current);
+    setIsDirty(true);
+    setSaveError(null);
   }
 
   return (
@@ -94,7 +179,7 @@ export function DocumentEditor({
           maxLength={120}
           onChange={(event) => {
             setTitle(event.target.value);
-            setIsDirty(true);
+            markDirty();
           }}
           placeholder="Untitled document"
           value={title}
@@ -107,11 +192,11 @@ export function DocumentEditor({
                 Saving
               </>
             ) : isDirty ? (
-              "Unsaved changes"
+              saveError ? "Save failed — retry" : "Unsaved changes"
             ) : (
               <>
                 <Check aria-hidden="true" className="mr-1 inline size-3" />
-                Saved
+                {formatSavedTime(lastSavedAt)}
               </>
             )}
           </span>
@@ -121,7 +206,11 @@ export function DocumentEditor({
               Share
             </Button>
           ) : null}
-          <Button disabled={!isDirty || isSaving} onClick={saveDocument} type="button">
+          <Button
+            disabled={!isDirty || isSaving}
+            onClick={() => void saveDocument()}
+            type="button"
+          >
             {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Save aria-hidden="true" />}
             Save
           </Button>

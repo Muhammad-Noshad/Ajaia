@@ -28,6 +28,10 @@ header; this is mocked assessment authentication, not production auth.
 The import flow supports `.txt` and `.md` files up to 1 MB. Files are converted
 into new editable documents and the original binary is not stored.
 
+Document changes autosave 1.2 seconds after editing stops. The explicit Save
+button remains available for immediate persistence and displays the latest save
+time or a retry-needed state when saving fails.
+
 Open [http://localhost:3000](http://localhost:3000).
 
 ## Useful commands
