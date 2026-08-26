@@ -1,6 +1,6 @@
 # Submission Manifest
 
-Update the placeholders below before submitting the assessment.
+Update the remaining placeholders below before final submission.
 
 ## Included
 
@@ -9,7 +9,7 @@ Update the placeholders below before submitting the assessment.
 - [x] `docs/ARCHITECTURE.md`
 - [x] `docs/AI_WORKFLOW.md`
 - [x] `SUBMISSION.md`
-- [ ] Live product URL: `TODO`
+- [x] Live product URL: [https://ajaiadocs-three.vercel.app/](https://ajaiadocs-three.vercel.app/)
 - [ ] Public walkthrough video URL: `TODO`
 - [ ] `WALKTHROUGH_URL.txt` updated with the final URL
 - [ ] Google Drive folder link: `TODO`

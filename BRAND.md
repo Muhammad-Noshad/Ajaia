@@ -34,7 +34,7 @@ Components should use semantic shadcn classes such as `bg-primary`,
 
 ## Mark
 
-The starter mark is available at `public/ajaia-mark.svg`. Keep its rounded
+The brand mark is available at `public/ajaia-mark.svg`. Keep its rounded
 container and clear space when using it. The wordmark should be rendered as
 text using Manrope rather than duplicated inside an image.
 

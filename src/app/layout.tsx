@@ -3,8 +3,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ajaia Assessment Starter",
-  description: "A lightweight full-stack starter for the Ajaia assessment.",
+  title: "Ajaia Docs",
+  description: "A focused workspace for writing, sharing, and reviewing documents.",
 };
 
 // The root layout owns application-wide providers and infrastructure UI. Keeping

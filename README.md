@@ -1,8 +1,9 @@
-# Ajaia Assessment Starter
+# Ajaia Docs
 
-Lightweight collaborative document editor for the Ajaia timed full-stack
-assessment. It focuses on a useful persisted editing flow, practical sharing,
-and text/Markdown import without pretending to implement Google Docs in full.
+A focused collaborative document editor for creating, editing, sharing, and
+reviewing documents. It prioritizes a useful persisted editing flow, practical
+sharing, and text/Markdown import without pretending to implement Google Docs
+in full.
 
 ## Stack
 
@@ -64,6 +65,8 @@ authors can delete their own comments, while the document owner can moderate any
 comment.
 
 Open [http://localhost:3000](http://localhost:3000).
+
+Live demo: [https://ajaiadocs-three.vercel.app/](https://ajaiadocs-three.vercel.app/)
 
 ## Useful commands
 

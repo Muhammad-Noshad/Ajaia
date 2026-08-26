@@ -1,5 +1,5 @@
 // These stable demo identities make the sharing workflow reviewable without
-// pretending that this assessment starter implements production authentication.
+// pretending that this demo workspace implements production authentication.
 export const DEMO_USERS = [
   {
     id: "alice",
