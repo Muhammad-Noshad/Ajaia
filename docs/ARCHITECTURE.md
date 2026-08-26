@@ -37,6 +37,10 @@ pretend a save succeeded before persistence completes.
 - PDF export uses the browser's print pipeline with print-only styles that hide
   application chrome and expand the editor canvas; this avoids introducing a
   second HTML-to-PDF rendering stack.
+- Version history is loaded on demand from a document subcollection. A
+  read-only Tiptap preview lets users inspect formatting before restoring;
+  restores update the live editor and create a new snapshot, so a restore can
+  itself be reversed.
 - Tiptap stores the editor document as JSON, preserving required structure. Its
   StarterKit also supplies undo/redo, links, headings, lists, blockquotes, code
   blocks, and horizontal rules without changing the persistence contract.
@@ -55,6 +59,8 @@ Route Handlers live under `src/app/api`:
 | --- | --- |
 | `GET/POST /api/documents` | List accessible documents and create a document |
 | `GET/PUT/DELETE /api/documents/:id` | Read/save an accessible document; delete is owner-only |
+| `GET /api/documents/:id/versions` | List the 50 newest accessible versions |
+| `POST /api/documents/:id/versions/:versionId/restore` | Restore an accessible version |
 | `POST /api/documents/:id/share` | Owner-only access grant |
 | `POST /api/documents/import` | Validate and import `.txt`/`.md` text |
 | `GET/POST /api/session` | Read or set the demo-user cookie |
@@ -72,6 +78,11 @@ Each document contains:
 - `ownerId`: fixed demo-user ID
 - `sharedWith`: array of fixed demo-user IDs
 - Firestore `createdAt` and `updatedAt` timestamps
+
+Each document also has a `versions` subcollection. A version stores the title,
+Tiptap JSON, creator demo-user ID, and creation timestamp. History reads are
+capped at 50 versions for a responsive panel; deleting a document removes its
+version snapshots in batches as well.
 
 Accessible documents satisfy `ownerId == currentUser` or
 `sharedWith` containing `currentUser`. Only the owner can grant access; shared

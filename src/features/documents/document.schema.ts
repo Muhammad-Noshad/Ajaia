@@ -42,6 +42,8 @@ export const documentIdSchema = z
   .min(1, "Invalid document id")
   .max(150, "Invalid document id");
 
+export const versionIdSchema = documentIdSchema;
+
 export const createDocumentSchema = z.object({
   title: documentTitleSchema,
   content: richTextContentSchema,

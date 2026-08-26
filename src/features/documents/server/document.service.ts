@@ -6,6 +6,7 @@ import {
   importedDocumentSchema,
   shareDocumentSchema,
   updateDocumentSchema,
+  versionIdSchema,
   type CreateDocumentInput,
   type RichTextContent,
   type UpdateDocumentInput,
@@ -20,7 +21,9 @@ import {
   createStoredDocument,
   deleteStoredDocument,
   getStoredDocument,
+  listStoredDocumentVersions,
   listStoredDocuments,
+  restoreStoredDocumentVersion,
   updateStoredDocument,
 } from "@/features/documents/server/document.store";
 import { getDemoUser } from "@/features/session/demo-users";
@@ -89,7 +92,11 @@ export async function updateDocument(
     throw new ApplicationError("NOT_FOUND", "Document not found");
   }
 
-  const document = await updateStoredDocument(parsedDocumentId, parsedInput);
+  const document = await updateStoredDocument(
+    parsedDocumentId,
+    parsedInput,
+    userId,
+  );
 
   if (!document) {
     throw new ApplicationError("NOT_FOUND", "Document not found");
@@ -118,6 +125,48 @@ export async function deleteDocument(
   }
 
   await deleteStoredDocument(parsedDocumentId);
+}
+
+/** Lists history only for users who can already access the document. */
+export async function listDocumentVersions(
+  userId: string,
+  documentId: string,
+) {
+  const parsedDocumentId = parseDocumentId(documentId);
+  const document = await getStoredDocument(parsedDocumentId);
+
+  if (!document || !canAccessDocument(document, userId)) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  return listStoredDocumentVersions(parsedDocumentId);
+}
+
+/** Restores an accessible version, treating the restore as a normal edit. */
+export async function restoreDocumentVersion(
+  userId: string,
+  documentId: string,
+  versionId: string,
+): Promise<DocumentView> {
+  const parsedDocumentId = parseDocumentId(documentId);
+  const parsedVersionId = versionIdSchema.parse(versionId);
+  const document = await getStoredDocument(parsedDocumentId);
+
+  if (!document || !canAccessDocument(document, userId)) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  const restoredDocument = await restoreStoredDocumentVersion(
+    parsedDocumentId,
+    parsedVersionId,
+    userId,
+  );
+
+  if (!restoredDocument) {
+    throw new ApplicationError("NOT_FOUND", "Document version not found");
+  }
+
+  return restoredDocument;
 }
 
 /** Imports text as structured paragraphs so the result is immediately editable. */

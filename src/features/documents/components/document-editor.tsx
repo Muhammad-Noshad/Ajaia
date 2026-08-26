@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ListTree, Loader2, Save, Share2, Trash2 } from "lucide-react";
+import {
+  Check,
+  History,
+  ListTree,
+  Loader2,
+  Save,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import { Markdown } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
@@ -10,6 +18,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DocumentOutline } from "@/features/documents/components/document-outline";
 import { DeleteDocumentDialog } from "@/features/documents/components/delete-document-dialog";
+import { VersionHistory } from "@/features/documents/components/version-history";
 import { DocumentToolbar } from "@/features/documents/components/document-toolbar";
 import { ExportMenu } from "@/features/documents/components/export-menu";
 import type { DocumentView } from "@/features/documents/document.types";
@@ -100,6 +109,7 @@ export function DocumentEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [changeVersion, setChangeVersion] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState(
@@ -241,6 +251,11 @@ export function DocumentEditor({
     setIsDeleteDialogOpen(true);
   }
 
+  function toggleHistory() {
+    setIsHistoryOpen((current) => !current);
+    setIsOutlineOpen(false);
+  }
+
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card print:block print:h-auto print:overflow-visible">
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6 print:block print:border-0 print:px-0 print:py-0">
@@ -297,12 +312,24 @@ export function DocumentEditor({
           ) : null}
           <Button
             aria-pressed={isOutlineOpen}
-            onClick={() => setIsOutlineOpen((current) => !current)}
+            onClick={() => {
+              setIsOutlineOpen((current) => !current);
+              setIsHistoryOpen(false);
+            }}
             type="button"
             variant="outline"
           >
             <ListTree aria-hidden="true" />
             Outline
+          </Button>
+          <Button
+            aria-pressed={isHistoryOpen}
+            onClick={toggleHistory}
+            type="button"
+            variant="outline"
+          >
+            <History aria-hidden="true" />
+            History
           </Button>
           <ExportMenu
             onExportMarkdown={() => {
@@ -333,6 +360,23 @@ export function DocumentEditor({
           <DocumentOutline
             editor={editor}
             onClose={() => setIsOutlineOpen(false)}
+          />
+        ) : null}
+        {isHistoryOpen ? (
+          <VersionHistory
+            document={document}
+            onClose={() => setIsHistoryOpen(false)}
+            onRestored={(restoredDocument) => {
+              editor?.commands.setContent(restoredDocument.content, {
+                emitUpdate: false,
+              });
+              setTitle(restoredDocument.title);
+              setIsDirty(false);
+              setSaveError(null);
+              setLastSavedAt(new Date(restoredDocument.updatedAt));
+              lastAutosavedVersionRef.current = changeVersionRef.current;
+              onSaved(restoredDocument);
+            }}
           />
         ) : null}
       </div>

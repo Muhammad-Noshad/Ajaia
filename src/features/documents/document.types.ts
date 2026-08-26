@@ -11,3 +11,11 @@ export type DocumentView = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type DocumentVersionView = {
+  id: string;
+  title: string;
+  content: RichTextContent;
+  createdById: string;
+  createdAt: string;
+};

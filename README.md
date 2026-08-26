@@ -52,6 +52,9 @@ live word and character counts, and the Outline control provides navigation for
 documents with headings. The Export menu downloads Markdown directly or opens a
 clean print view for saving the current editor content as PDF. Document owners
 can permanently delete their documents after confirmation; shared users cannot.
+The History panel shows the 50 most recent saved versions and lets accessible
+editors preview formatted content before restoring an earlier state; the
+current state is preserved in history after every restore.
 
 Open [http://localhost:3000](http://localhost:3000).
 
