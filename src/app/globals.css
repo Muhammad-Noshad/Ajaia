@@ -152,4 +152,35 @@
     background: color-mix(in oklab, var(--brand-mint) 70%, transparent);
     color: var(--brand-ink);
   }
+
+  /* Tiptap renders semantic elements directly, so these rules provide a
+     consistent reading surface without introducing the Tailwind typography plugin. */
+  .tiptap p {
+    margin: 0.75rem 0;
+  }
+
+  .tiptap h1 {
+    margin: 1.5rem 0 0.75rem;
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .tiptap ul,
+  .tiptap ol {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .tiptap ul {
+    list-style-type: disc;
+  }
+
+  .tiptap ol {
+    list-style-type: decimal;
+  }
+
+  .tiptap li p {
+    margin: 0.25rem 0;
+  }
 }
