@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   canAccessDocument,
   canDeleteDocument,
+  canEditDocument,
+  getDocumentRole,
   canManageSharing,
 } from "@/features/documents/server/document-access";
 
@@ -12,6 +14,7 @@ describe("document access", () => {
   const document = {
     ownerId: "alice",
     sharedWith: ["bob"],
+    sharedRoles: { bob: "viewer" as const },
   };
 
   it("allows the owner and shared users to access a document", () => {
@@ -28,5 +31,13 @@ describe("document access", () => {
   it("allows only the owner to delete a document", () => {
     expect(canDeleteDocument(document, "alice")).toBe(true);
     expect(canDeleteDocument(document, "bob")).toBe(false);
+  });
+
+  it("distinguishes editor and viewer capabilities", () => {
+    expect(getDocumentRole(document, "alice")).toBe("owner");
+    expect(getDocumentRole(document, "bob")).toBe("viewer");
+    expect(canEditDocument(document, "alice")).toBe(true);
+    expect(canEditDocument(document, "bob")).toBe(false);
+    expect(getDocumentRole(document, "casey")).toBeNull();
   });
 });

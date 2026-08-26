@@ -13,6 +13,7 @@ import { VersionPreviewDialog } from "@/features/documents/components/version-pr
 import { getDemoUser } from "@/features/session/demo-users";
 
 type VersionHistoryProps = {
+  canRestore: boolean;
   document: DocumentView;
   onClose: () => void;
   onRestored: (document: DocumentView) => void;
@@ -32,6 +33,7 @@ function formatVersionDate(value: string) {
 // This panel keeps history read/restore behavior together while the parent
 // editor remains responsible for applying the restored content to Tiptap.
 export function VersionHistory({
+  canRestore,
   document,
   onClose,
   onRestored,
@@ -188,20 +190,22 @@ export function VersionHistory({
                         <Eye aria-hidden="true" />
                         Preview
                       </Button>
-                      <Button
-                        className="flex-1"
-                        disabled={Boolean(restoringVersionId)}
-                        onClick={() => void restoreVersion(version.id)}
-                        size="sm"
-                        type="button"
-                      >
-                        {isRestoring ? (
-                          <Loader2 aria-hidden="true" className="animate-spin" />
-                        ) : (
-                          <RotateCcw aria-hidden="true" />
-                        )}
-                        {isRestoring ? "Restoring…" : "Restore"}
-                      </Button>
+                      {canRestore ? (
+                        <Button
+                          className="flex-1"
+                          disabled={Boolean(restoringVersionId)}
+                          onClick={() => void restoreVersion(version.id)}
+                          size="sm"
+                          type="button"
+                        >
+                          {isRestoring ? (
+                            <Loader2 aria-hidden="true" className="animate-spin" />
+                          ) : (
+                            <RotateCcw aria-hidden="true" />
+                          )}
+                          {isRestoring ? "Restoring…" : "Restore"}
+                        </Button>
+                      ) : null}
                     </div>
                   </li>
                 );

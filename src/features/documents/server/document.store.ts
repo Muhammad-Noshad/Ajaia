@@ -9,7 +9,10 @@ import type {
   UpdateDocumentInput,
 } from "@/features/documents/document.schema";
 import type { DocumentView } from "@/features/documents/document.types";
-import type { DocumentVersionView } from "@/features/documents/document.types";
+import type {
+  DocumentVersionView,
+  SharedDocumentRole,
+} from "@/features/documents/document.types";
 import { firestore } from "@/lib/firestore";
 
 type FirestoreDocument = {
@@ -17,6 +20,7 @@ type FirestoreDocument = {
   content: RichTextContent;
   ownerId: string;
   sharedWith: string[];
+  sharedRoles?: Record<string, SharedDocumentRole>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 };
@@ -42,6 +46,18 @@ function timestampToDate(value: Timestamp | Date | null | undefined): Date {
   return value instanceof Date ? value : new Date(0);
 }
 
+function normalizeSharedRoles(
+  sharedWith: string[],
+  sharedRoles: Record<string, SharedDocumentRole> | undefined,
+): Record<string, SharedDocumentRole> {
+  return Object.fromEntries(
+    sharedWith.map((userId) => [
+      userId,
+      sharedRoles?.[userId] === "viewer" ? "viewer" : "editor",
+    ]),
+  );
+}
+
 /** Converts a Firestore snapshot into the server-neutral document shape. */
 function serializeSnapshot(snapshot: DocumentSnapshot): DocumentView | null {
   if (!snapshot.exists) {
@@ -50,12 +66,15 @@ function serializeSnapshot(snapshot: DocumentSnapshot): DocumentView | null {
 
   const data = snapshot.data() as FirestoreDocument;
 
+  const sharedWith = data.sharedWith ?? [];
+
   return {
     id: snapshot.id,
     title: data.title,
     content: data.content,
     ownerId: data.ownerId,
-    sharedWith: data.sharedWith ?? [],
+    sharedWith,
+    sharedRoles: normalizeSharedRoles(sharedWith, data.sharedRoles),
     createdAt: timestampToDate(data.createdAt).toISOString(),
     updatedAt: timestampToDate(data.updatedAt).toISOString(),
   };
@@ -111,6 +130,7 @@ export async function createStoredDocument(
     content: input.content,
     ownerId: input.ownerId,
     sharedWith: [],
+    sharedRoles: {},
     createdAt: now,
     updatedAt: now,
   });
@@ -183,6 +203,10 @@ export async function updateStoredDocument(
       content: input.content as RichTextContent,
       ownerId: current.ownerId,
       sharedWith: current.sharedWith ?? [],
+      sharedRoles: normalizeSharedRoles(
+        current.sharedWith ?? [],
+        current.sharedRoles,
+      ),
       createdAt: timestampToDate(current.createdAt).toISOString(),
       updatedAt: now.toDate().toISOString(),
     };
@@ -193,10 +217,14 @@ export async function updateStoredDocument(
 export async function addStoredDocumentShare(
   documentId: string,
   targetUserId: string,
+  role: SharedDocumentRole,
 ): Promise<DocumentView | null> {
   const reference = documents.doc(documentId);
   await reference.update({
     sharedWith: FieldValue.arrayUnion(targetUserId),
+    // Demo IDs are validated by the service, so they are safe Firestore map
+    // keys. This update changes only the selected user's role atomically.
+    [`sharedRoles.${targetUserId}`]: role,
     updatedAt: FieldValue.serverTimestamp(),
   });
 
@@ -257,6 +285,10 @@ export async function restoreStoredDocumentVersion(
       content: version.content,
       ownerId: current.ownerId,
       sharedWith: current.sharedWith ?? [],
+      sharedRoles: normalizeSharedRoles(
+        current.sharedWith ?? [],
+        current.sharedRoles,
+      ),
       createdAt: timestampToDate(current.createdAt).toISOString(),
       updatedAt: now.toDate().toISOString(),
     };

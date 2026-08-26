@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -20,8 +20,8 @@ type ShareDialogProps = {
   onShared: (document: DocumentView) => void;
 };
 
-// Sharing is a form boundary: Zod validates the submitted identity, while the
-// service independently verifies ownership and that the target user is known.
+// Owners use this form both to grant access and to update an existing user's
+// role. The server still validates the target and ownership independently.
 export function ShareDialog({
   currentUserId,
   document,
@@ -29,13 +29,21 @@ export function ShareDialog({
   onShared,
 }: ShareDialogProps) {
   const availableUsers = DEMO_USERS.filter(
-    (user) =>
-      user.id !== currentUserId && !document.sharedWith.includes(user.id),
+    (user) => user.id !== currentUserId && user.id !== document.ownerId,
   );
-  const { register, handleSubmit, formState } = useForm<ShareDocumentInput>({
-    defaultValues: { userId: availableUsers[0]?.id ?? "" },
-    resolver: zodResolver(shareDocumentSchema),
-  });
+  const { control, handleSubmit, register, setValue, formState } =
+    useForm<ShareDocumentInput>({
+      defaultValues: {
+        userId: availableUsers[0]?.id ?? "",
+        role: availableUsers[0]
+          ? document.sharedRoles[availableUsers[0].id] ?? "editor"
+          : "editor",
+      },
+      resolver: zodResolver(shareDocumentSchema),
+    });
+  const selectedUserId = useWatch({ control, name: "userId" });
+  const isExistingShare = document.sharedWith.includes(selectedUserId);
+  const userField = register("userId");
 
   async function submitShare(input: ShareDocumentInput) {
     try {
@@ -50,15 +58,17 @@ export function ShareDialog({
       };
 
       if (!response.ok || !result.document) {
-        throw new Error(result.error ?? "Unable to share document");
+        throw new Error(result.error ?? "Unable to update document access");
       }
 
       onShared(result.document);
-      toast.success("Document shared");
+      toast.success(isExistingShare ? "Access updated" : "Document shared");
       onClose();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Unable to share document",
+        error instanceof Error
+          ? error.message
+          : "Unable to update document access",
       );
     }
   }
@@ -77,11 +87,17 @@ export function ShareDialog({
               Share document
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Give another demo user edit access to “{document.title}”.
+              Choose who can access this document and what they can do.
             </p>
           </div>
-          <Button aria-label="Close share dialog" onClick={onClose} size="icon" type="button" variant="ghost">
-            <X />
+          <Button
+            aria-label="Close share dialog"
+            onClick={onClose}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <X aria-hidden="true" />
           </Button>
         </div>
         {availableUsers.length > 0 ? (
@@ -93,7 +109,14 @@ export function ShareDialog({
               <select
                 className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 id="share-user"
-                {...register("userId")}
+                {...userField}
+                onChange={(event) => {
+                  userField.onChange(event);
+                  setValue(
+                    "role",
+                    document.sharedRoles[event.target.value] ?? "editor",
+                  );
+                }}
               >
                 {availableUsers.map((user) => (
                   <option key={user.id} value={user.id}>
@@ -107,16 +130,58 @@ export function ShareDialog({
                 </p>
               ) : null}
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="share-role">
+                Permission
+              </label>
+              <select
+                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                id="share-role"
+                {...register("role")}
+              >
+                <option value="editor">Editor — can edit and restore versions</option>
+                <option value="viewer">Viewer — can view, preview, and export</option>
+              </select>
+            </div>
             <Button disabled={formState.isSubmitting} type="submit">
               <UserPlus aria-hidden="true" />
-              {formState.isSubmitting ? "Sharing…" : "Share document"}
+              {formState.isSubmitting
+                ? "Saving…"
+                : isExistingShare
+                  ? "Update access"
+                  : "Share document"}
             </Button>
           </form>
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">
-            This document is already shared with every other demo user.
+            There are no other demo users available to share with.
           </p>
         )}
+        {document.sharedWith.length > 0 ? (
+          <div className="mt-6 border-t border-border pt-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Current access
+            </p>
+            <ul className="mt-3 space-y-2">
+              {document.sharedWith.map((userId) => {
+                const user = DEMO_USERS.find((candidate) => candidate.id === userId);
+                const role = document.sharedRoles[userId] ?? "editor";
+
+                return (
+                  <li
+                    className="flex items-center justify-between gap-3 text-sm"
+                    key={userId}
+                  >
+                    <span className="truncate">{user?.name ?? userId}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {role === "editor" ? "Editor" : "Viewer"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
       </section>
     </div>
   );

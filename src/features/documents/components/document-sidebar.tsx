@@ -77,7 +77,11 @@ export function DocumentSidebar({
                         : "text-muted-foreground"
                     }`}
                   >
-                    {isOwned ? "Owned" : "Shared"}
+                    {isOwned
+                      ? "Owned"
+                      : document.sharedRoles[currentUserId] === "viewer"
+                        ? "Shared · Viewer"
+                        : "Shared · Editor"}
                   </span>
                 </span>
               </button>

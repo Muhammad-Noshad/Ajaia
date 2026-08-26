@@ -56,6 +56,10 @@ The History panel shows the 50 most recent saved versions and lets accessible
 editors preview formatted content before restoring an earlier state; the
 current state is preserved in history after every restore.
 
+Sharing supports two collaborator roles: **Editor** can edit, rename, export,
+preview history, and restore versions; **Viewer** can view, export, and preview
+history only. Owners alone can share, change roles, and delete documents.
+
 Open [http://localhost:3000](http://localhost:3000).
 
 ## Useful commands

@@ -1,5 +1,8 @@
 import { ApplicationError } from "@/lib/application-error";
-import type { DocumentView } from "@/features/documents/document.types";
+import type {
+  DocumentVersionView,
+  DocumentView,
+} from "@/features/documents/document.types";
 import {
   createDocumentSchema,
   documentIdSchema,
@@ -9,11 +12,13 @@ import {
   versionIdSchema,
   type CreateDocumentInput,
   type RichTextContent,
+  type ShareDocumentInput,
   type UpdateDocumentInput,
 } from "@/features/documents/document.schema";
 import {
   canAccessDocument,
   canDeleteDocument,
+  canEditDocument,
   canManageSharing,
 } from "@/features/documents/server/document-access";
 import {
@@ -88,8 +93,15 @@ export async function updateDocument(
   const parsedInput = updateDocumentSchema.parse(input);
   const existing = await getStoredDocument(parsedDocumentId);
 
-  if (!existing || !canAccessDocument(existing, userId)) {
+  if (!existing) {
     throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  if (!canEditDocument(existing, userId)) {
+    throw new ApplicationError(
+      "FORBIDDEN",
+      "This document is view-only for your account",
+    );
   }
 
   const document = await updateStoredDocument(
@@ -131,7 +143,7 @@ export async function deleteDocument(
 export async function listDocumentVersions(
   userId: string,
   documentId: string,
-) {
+): Promise<DocumentVersionView[]> {
   const parsedDocumentId = parseDocumentId(documentId);
   const document = await getStoredDocument(parsedDocumentId);
 
@@ -142,7 +154,7 @@ export async function listDocumentVersions(
   return listStoredDocumentVersions(parsedDocumentId);
 }
 
-/** Restores an accessible version, treating the restore as a normal edit. */
+/** Restores a version only for owners and editors because it changes content. */
 export async function restoreDocumentVersion(
   userId: string,
   documentId: string,
@@ -152,8 +164,15 @@ export async function restoreDocumentVersion(
   const parsedVersionId = versionIdSchema.parse(versionId);
   const document = await getStoredDocument(parsedDocumentId);
 
-  if (!document || !canAccessDocument(document, userId)) {
+  if (!document) {
     throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  if (!canEditDocument(document, userId)) {
+    throw new ApplicationError(
+      "FORBIDDEN",
+      "This document is view-only for your account",
+    );
   }
 
   const restoredDocument = await restoreStoredDocumentVersion(
@@ -186,10 +205,10 @@ export async function importTextDocument(
 export async function shareDocument(
   userId: string,
   documentId: string,
-  input: { userId: string },
+  input: ShareDocumentInput,
 ): Promise<DocumentView> {
   const parsedDocumentId = parseDocumentId(documentId);
-  const { userId: targetUserId } = shareDocumentSchema.parse(input);
+  const { userId: targetUserId, role } = shareDocumentSchema.parse(input);
 
   if (!getDemoUser(targetUserId)) {
     throw new ApplicationError("INVALID_INPUT", "Unknown demo user");
@@ -218,6 +237,7 @@ export async function shareDocument(
   const updatedDocument = await addStoredDocumentShare(
     parsedDocumentId,
     targetUserId,
+    role,
   );
 
   if (!updatedDocument) {

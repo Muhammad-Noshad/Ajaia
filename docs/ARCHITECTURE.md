@@ -86,7 +86,11 @@ version snapshots in batches as well.
 
 Accessible documents satisfy `ownerId == currentUser` or
 `sharedWith` containing `currentUser`. Only the owner can grant access; shared
-users can edit because the assignment does not define read-only permissions.
+users are assigned either `editor` or `viewer` roles. Editors can update the
+document and restore versions; viewers can read, export, and preview history.
+Only the owner can grant access, change roles, or delete the document. For
+legacy documents without `sharedRoles`, existing shared users default to
+`editor`.
 
 ## Important tradeoffs
 

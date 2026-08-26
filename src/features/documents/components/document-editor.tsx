@@ -22,6 +22,7 @@ import { VersionHistory } from "@/features/documents/components/version-history"
 import { DocumentToolbar } from "@/features/documents/components/document-toolbar";
 import { ExportMenu } from "@/features/documents/components/export-menu";
 import type { DocumentView } from "@/features/documents/document.types";
+import { getDocumentRole } from "@/features/documents/server/document-access";
 
 type DocumentEditorProps = {
   document: DocumentView;
@@ -104,6 +105,9 @@ export function DocumentEditor({
   onShare,
   onDeleted,
 }: DocumentEditorProps) {
+  const documentRole = getDocumentRole(document, currentUserId);
+  const canEdit = documentRole === "owner" || documentRole === "editor";
+  const canRestore = canEdit;
   const [title, setTitle] = useState(document.title);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -122,6 +126,7 @@ export function DocumentEditor({
   const editor = useEditor({
     extensions: [StarterKit, Markdown],
     content: document.content,
+    editable: canEdit,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -138,6 +143,10 @@ export function DocumentEditor({
     },
   });
 
+  useEffect(() => {
+    editor?.setEditable(canEdit);
+  }, [canEdit, editor]);
+
   const editorText = editor?.getText() ?? "";
   const trimmedEditorText = editorText.trim();
   const editorStats = {
@@ -147,7 +156,7 @@ export function DocumentEditor({
 
   const saveDocument = useCallback(
     async function saveDocument({ notify = true }: SaveOptions = {}) {
-      if (!editor || isSaving || !isDirty) {
+      if (!canEdit || !editor || isSaving || !isDirty) {
         return;
       }
 
@@ -202,7 +211,7 @@ export function DocumentEditor({
         setIsSaving(false);
       }
     },
-    [document.id, editor, isDirty, isSaving, onSaved, title],
+    [canEdit, document.id, editor, isDirty, isSaving, onSaved, title],
   );
 
   // Debounce autosave by edit version rather than only dirty state. This makes
@@ -271,6 +280,7 @@ export function DocumentEditor({
             markDirty();
           }}
           placeholder="Untitled document"
+          readOnly={!canEdit}
           value={title}
         />
         <h1 className="hidden text-2xl font-bold print:block print:pb-5">
@@ -278,7 +288,9 @@ export function DocumentEditor({
         </h1>
         <div className="flex items-center gap-3 print:hidden">
           <span className="text-xs text-muted-foreground" role="status">
-            {isSaving ? (
+            {!canEdit ? (
+              "View only"
+            ) : isSaving ? (
               <>
                 <Loader2 aria-hidden="true" className="mr-1 inline size-3 animate-spin" />
                 Saving
@@ -339,19 +351,23 @@ export function DocumentEditor({
             }}
             onExportPdf={() => exportPdf(title)}
           />
-          <Button
-            disabled={!isDirty || isSaving}
-            onClick={() => void saveDocument()}
-            type="button"
-          >
-            {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Save aria-hidden="true" />}
-            Save
-          </Button>
+          {canEdit ? (
+            <Button
+              disabled={!isDirty || isSaving}
+              onClick={() => void saveDocument()}
+              type="button"
+            >
+              {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Save aria-hidden="true" />}
+              Save
+            </Button>
+          ) : null}
         </div>
       </header>
-      <div className="shrink-0 print:hidden">
-        <DocumentToolbar editor={editor} />
-      </div>
+      {canEdit ? (
+        <div className="shrink-0 print:hidden">
+          <DocumentToolbar editor={editor} />
+        </div>
+      ) : null}
       <div className="relative flex min-h-0 flex-1 print:block print:h-auto print:overflow-visible">
         <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain print:block print:h-auto print:overflow-visible">
           <EditorContent editor={editor} />
@@ -364,6 +380,7 @@ export function DocumentEditor({
         ) : null}
         {isHistoryOpen ? (
           <VersionHistory
+            canRestore={canRestore}
             document={document}
             onClose={() => setIsHistoryOpen(false)}
             onRestored={(restoredDocument) => {

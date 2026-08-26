@@ -53,6 +53,7 @@ export const updateDocumentSchema = createDocumentSchema;
 
 export const shareDocumentSchema = z.object({
   userId: z.string().trim().min(1),
+  role: z.enum(["editor", "viewer"]),
 });
 
 export const importedDocumentSchema = z.object({
