@@ -37,6 +37,8 @@ editable document; the original binary is not stored.
 - Editing is persisted but not simultaneous real-time collaboration.
 - Imported Markdown is treated as text paragraphs rather than parsed into rich
   Markdown formatting.
+- PDF export opens the browser print dialog; reviewers should choose “Save as
+  PDF” to download the document.
 
 ## Final verification checklist
 

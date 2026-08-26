@@ -34,6 +34,9 @@ pretend a save succeeded before persistence completes.
   second copy of document content.
 - Markdown export serializes the live Tiptap state on the client, adding the
   separately stored document title as the exported top-level heading.
+- PDF export uses the browser's print pipeline with print-only styles that hide
+  application chrome and expand the editor canvas; this avoids introducing a
+  second HTML-to-PDF rendering stack.
 - Tiptap stores the editor document as JSON, preserving required structure. Its
   StarterKit also supplies undo/redo, links, headings, lists, blockquotes, code
   blocks, and horizontal rules without changing the persistence contract.

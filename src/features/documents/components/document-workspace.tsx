@@ -164,8 +164,8 @@ export function DocumentWorkspace() {
   }
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-background">
-      <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-4 sm:px-8">
+    <main className="flex h-dvh flex-col overflow-hidden bg-background print:h-auto print:overflow-visible">
+      <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-4 sm:px-8 print:hidden">
         <div className="flex size-9 items-center justify-center rounded-xl bg-brand-indigo text-primary-foreground">
           <FileText aria-hidden="true" className="size-5" />
         </div>
@@ -199,7 +199,7 @@ export function DocumentWorkspace() {
           </button>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row print:block print:h-auto print:overflow-visible">
           <DocumentSidebar
             currentUserId={currentUser?.id ?? ""}
             currentUserName={currentUser?.name ?? "Demo user"}

@@ -32,8 +32,8 @@ Document changes autosave 1.2 seconds after editing stops. The explicit Save
 button remains available for immediate persistence and displays the latest save
 time or a retry-needed state when saving fails. The editor footer also shows
 live word and character counts, and the Outline control provides navigation for
-documents with headings. The Export .md action downloads the current editor
-content, including the document title, as Markdown.
+documents with headings. The Export menu downloads Markdown directly or opens a
+clean print view for saving the current editor content as PDF.
 
 Open [http://localhost:3000](http://localhost:3000).
 

@@ -1,15 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Download, ListTree, Loader2, Save, Share2 } from "lucide-react";
+import { Check, ListTree, Loader2, Save, Share2 } from "lucide-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import { Markdown } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { DocumentToolbar } from "@/features/documents/components/document-toolbar";
 import { DocumentOutline } from "@/features/documents/components/document-outline";
+import { DocumentToolbar } from "@/features/documents/components/document-toolbar";
+import { ExportMenu } from "@/features/documents/components/export-menu";
 import type { DocumentView } from "@/features/documents/document.types";
 
 type DocumentEditorProps = {
@@ -25,7 +26,7 @@ type SaveOptions = {
 
 const AUTOSAVE_DELAY_MS = 1200;
 
-function getSafeMarkdownFilename(title: string) {
+function getSafeExportFilename(title: string, extension: "md" | "pdf") {
   const safeTitle = title
     .trim()
     .replace(/[<>:"/\\|?*\u0000-\u001f]/gu, "-")
@@ -34,7 +35,7 @@ function getSafeMarkdownFilename(title: string) {
     .replace(/^\.+|\.+$/gu, "")
     .slice(0, 80);
 
-  return `${safeTitle || "untitled-document"}.md`;
+  return `${safeTitle || "untitled-document"}.${extension}`;
 }
 
 // Export uses the live editor state so users can download work before an
@@ -51,10 +52,25 @@ function exportMarkdown(editor: Editor, title: string) {
   const anchor = document.createElement("a");
 
   anchor.href = url;
-  anchor.download = getSafeMarkdownFilename(markdownTitle);
+  anchor.download = getSafeExportFilename(markdownTitle, "md");
   anchor.click();
   URL.revokeObjectURL(url);
   toast.success("Markdown exported");
+}
+
+// PDF export deliberately uses the browser print pipeline. Print CSS hides
+// app chrome and expands the editor canvas, producing a faithful PDF without
+// introducing a second HTML-to-PDF renderer or a large client dependency.
+function exportPdf(title: string) {
+  const previousTitle = document.title;
+  const restoreTitle = () => {
+    document.title = previousTitle;
+    window.removeEventListener("afterprint", restoreTitle);
+  };
+
+  document.title = getSafeExportFilename(title, "pdf");
+  window.addEventListener("afterprint", restoreTitle, { once: true });
+  window.print();
 }
 
 function formatSavedTime(savedAt: Date | null) {
@@ -210,13 +226,13 @@ export function DocumentEditor({
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card print:block print:h-auto print:overflow-visible">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6 print:block print:border-0 print:px-0 print:py-0">
         <label className="sr-only" htmlFor="document-title">
           Document title
         </label>
         <input
-          className="min-w-0 flex-1 bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-w-0 flex-1 bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring print:hidden"
           id="document-title"
           maxLength={120}
           onChange={(event) => {
@@ -226,7 +242,10 @@ export function DocumentEditor({
           placeholder="Untitled document"
           value={title}
         />
-        <div className="flex items-center gap-3">
+        <h1 className="hidden text-2xl font-bold print:block print:pb-5">
+          {title.trim() || "Untitled document"}
+        </h1>
+        <div className="flex items-center gap-3 print:hidden">
           <span className="text-xs text-muted-foreground" role="status">
             {isSaving ? (
               <>
@@ -257,19 +276,14 @@ export function DocumentEditor({
             <ListTree aria-hidden="true" />
             Outline
           </Button>
-          <Button
-            disabled={!editor}
-            onClick={() => {
+          <ExportMenu
+            onExportMarkdown={() => {
               if (editor) {
                 exportMarkdown(editor, title);
               }
             }}
-            type="button"
-            variant="outline"
-          >
-            <Download aria-hidden="true" />
-            Export .md
-          </Button>
+            onExportPdf={() => exportPdf(title)}
+          />
           <Button
             disabled={!isDirty || isSaving}
             onClick={() => void saveDocument()}
@@ -280,11 +294,11 @@ export function DocumentEditor({
           </Button>
         </div>
       </header>
-      <div className="shrink-0">
+      <div className="shrink-0 print:hidden">
         <DocumentToolbar editor={editor} />
       </div>
-      <div className="relative flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="relative flex min-h-0 flex-1 print:block print:h-auto print:overflow-visible">
+        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain print:block print:h-auto print:overflow-visible">
           <EditorContent editor={editor} />
         </div>
         {isOutlineOpen ? (
@@ -296,7 +310,7 @@ export function DocumentEditor({
       </div>
       <footer
         aria-label="Document statistics"
-        className="flex shrink-0 items-center justify-between gap-4 border-t border-border px-5 py-2 text-xs text-muted-foreground sm:px-10"
+        className="flex shrink-0 items-center justify-between gap-4 border-t border-border px-5 py-2 text-xs text-muted-foreground sm:px-10 print:hidden"
       >
         <span>{editorStats.words.toLocaleString()} words</span>
         <span>{editorStats.characters.toLocaleString()} characters</span>
