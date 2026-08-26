@@ -33,12 +33,72 @@ Casey as either **Editor** or **Viewer**. Editors can edit, rename, export,
 preview history, and restore versions; viewers can view, export, preview
 history, and comment. Only owners can share, change roles, or delete.
 
+## Assessment coverage
+
+### Core requirements
+
+- [x] Create, rename, edit, save, and reopen persisted documents.
+- [x] Preserve rich-text structure through Firestore persistence.
+- [x] Support bold, italic, underline, headings, and bulleted/numbered lists.
+- [x] Import a product-relevant file type with visible type and size limits.
+- [x] Demonstrate document ownership, sharing, and owned/shared labels.
+- [x] Provide validation, safe errors, loading states, and an automated test.
+
+### Implemented stretch work
+
+- [x] Version history with formatted preview and restore.
+- [x] Markdown and PDF export.
+- [x] Selected-text comments for owners, editors, and viewers.
+- [x] Editor/viewer role-based sharing permissions.
+- [x] Responsive editor layout with mobile document navigation.
+
+## Functionality summary
+
+- **Document workspace:** Lists accessible documents and keeps the selected
+  document synchronized with the editor.
+- **Document creation:** Creates a new editable document with an initial blank
+  rich-text structure.
+- **Rename and edit:** Lets owners and editors rename documents and modify their
+  content directly in the browser.
+- **Autosave and explicit save:** Debounces edits for automatic persistence while
+  retaining a visible Save action and saved/unsaved feedback.
+- **Persistence and reopen:** Stores title, content, ownership, and sharing in
+  Firestore so documents survive refreshes.
+- **Rich-text formatting:** Supports bold, italic, underline, headings,
+  blockquotes, code blocks, links, dividers, and bulleted/numbered lists.
+- **Undo and redo:** Uses Tiptap history to reverse and restore editing changes.
+- **Outline navigation:** Extracts headings from the live document and scrolls
+  to the selected section.
+- **Text and Markdown import:** Converts validated `.txt` and `.md` uploads into
+  new editable documents with clear type and size errors.
+- **Sharing and roles:** Owners can share with demo users as Editor or Viewer;
+  server checks enforce each role's allowed actions.
+- **Comments:** All accessible roles can comment on selected text, while authors
+  and owners can remove comments.
+- **Version history:** Saves meaningful snapshots, previews formatted versions,
+  and restores an earlier version while preserving the current state in history.
+- **Export:** Downloads Markdown or opens a print-ready view for PDF creation.
+- **Owner controls:** Owners can manage sharing, change roles, and delete
+  documents with confirmation; shared users cannot delete.
+- **Responsive navigation:** Keeps editing usable on narrow screens with a
+  mobile documents drawer and overlay panels for history, outline, and comments.
+- **Demo identity:** Provides Alice, Bob, and Casey accounts through a clearly
+  labeled demo-user switcher instead of pretending to provide production auth.
+- **Validation and feedback:** Includes safe API errors, loading/empty states,
+  unsupported-file feedback, save failure feedback, and word/character counts.
+
 ## Supported file import
 
 The product accepts `.txt` and `.md` files up to 1 MB. Each file becomes a new
 editable document; the original binary is not stored.
 
-## Current limitations
+## What is working
+
+The complete local reviewer flow works end to end: document creation, rich-text
+editing, save/reopen, text/Markdown import, sharing, role enforcement,
+comments, history preview/restore, exports, and owner-only deletion.
+
+## What is intentionally incomplete
 
 - Demo identity is not production authentication.
 - Editing is persisted but not simultaneous real-time collaboration.
@@ -49,10 +109,19 @@ editable document; the original binary is not stored.
 
 ## What another 2-4 hours would add
 
-- A compact mobile document switcher for widths below 900px, where the desktop
-  sidebar is intentionally hidden.
-- A deployed end-to-end reviewer smoke test with documented results.
-- A more complete Markdown importer that maps headings and lists to rich text.
+These are the highest-value product improvements after the submitted scope:
+
+- **Production authentication and secure invitations:** replace demo-user
+  switching with account sign-in, document invitations, access revocation, and
+  server-enforced identity rather than client-selected demo cookies.
+- **Structure-preserving Markdown import:** parse headings, lists, links, and
+  emphasis into the same Tiptap document model used by the editor instead of
+  importing Markdown as plain paragraphs.
+- **Comment lifecycle and collaboration signals:** add resolve/reopen and reply
+  actions to comments, plus lightweight presence or last-active indicators;
+  simultaneous editing would remain a larger follow-up project.
+- **Keyboard shortcuts:** add platform-aware shortcuts for save, undo/redo,
+  formatting, headings, and links, with shortcut hints in the toolbar.
 
 ## Reviewer walkthrough
 
