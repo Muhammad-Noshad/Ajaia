@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ListTree, Loader2, Save, Share2 } from "lucide-react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { Check, Download, ListTree, Loader2, Save, Share2 } from "lucide-react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { Markdown } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
 import { toast } from "sonner";
 
@@ -23,6 +24,38 @@ type SaveOptions = {
 };
 
 const AUTOSAVE_DELAY_MS = 1200;
+
+function getSafeMarkdownFilename(title: string) {
+  const safeTitle = title
+    .trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/gu, "-")
+    .replace(/\s+/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^\.+|\.+$/gu, "")
+    .slice(0, 80);
+
+  return `${safeTitle || "untitled-document"}.md`;
+}
+
+// Export uses the live editor state so users can download work before an
+// autosave completes. The title is stored separately from Tiptap content, so
+// it is added as the Markdown document heading here.
+function exportMarkdown(editor: Editor, title: string) {
+  const markdownTitle = title.trim().replace(/[\r\n]+/gu, " ") || "Untitled document";
+  const body = editor.getMarkdown().trim();
+  const markdown = body
+    ? `# ${markdownTitle}\n\n${body}\n`
+    : `# ${markdownTitle}\n`;
+  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = getSafeMarkdownFilename(markdownTitle);
+  anchor.click();
+  URL.revokeObjectURL(url);
+  toast.success("Markdown exported");
+}
 
 function formatSavedTime(savedAt: Date | null) {
   if (!savedAt || Number.isNaN(savedAt.getTime())) {
@@ -57,7 +90,7 @@ export function DocumentEditor({
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, Markdown],
     content: document.content,
     immediatelyRender: false,
     editorProps: {
@@ -223,6 +256,19 @@ export function DocumentEditor({
           >
             <ListTree aria-hidden="true" />
             Outline
+          </Button>
+          <Button
+            disabled={!editor}
+            onClick={() => {
+              if (editor) {
+                exportMarkdown(editor, title);
+              }
+            }}
+            type="button"
+            variant="outline"
+          >
+            <Download aria-hidden="true" />
+            Export .md
           </Button>
           <Button
             disabled={!isDirty || isSaving}
