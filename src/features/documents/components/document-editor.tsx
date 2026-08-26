@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Loader2, Save, Share2 } from "lucide-react";
+import { Check, ListTree, Loader2, Save, Share2 } from "lucide-react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DocumentToolbar } from "@/features/documents/components/document-toolbar";
+import { DocumentOutline } from "@/features/documents/components/document-outline";
 import type { DocumentView } from "@/features/documents/document.types";
 
 type DocumentEditorProps = {
@@ -46,6 +47,7 @@ export function DocumentEditor({
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isOutlineOpen, setIsOutlineOpen] = useState(false);
   const [changeVersion, setChangeVersion] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState(
     () => new Date(document.updatedAt),
@@ -214,6 +216,15 @@ export function DocumentEditor({
             </Button>
           ) : null}
           <Button
+            aria-pressed={isOutlineOpen}
+            onClick={() => setIsOutlineOpen((current) => !current)}
+            type="button"
+            variant="outline"
+          >
+            <ListTree aria-hidden="true" />
+            Outline
+          </Button>
+          <Button
             disabled={!isDirty || isSaving}
             onClick={() => void saveDocument()}
             type="button"
@@ -226,8 +237,16 @@ export function DocumentEditor({
       <div className="shrink-0">
         <DocumentToolbar editor={editor} />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <EditorContent editor={editor} />
+      <div className="relative flex min-h-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-y-auto overscroll-contain">
+          <EditorContent editor={editor} />
+        </div>
+        {isOutlineOpen ? (
+          <DocumentOutline
+            editor={editor}
+            onClose={() => setIsOutlineOpen(false)}
+          />
+        ) : null}
       </div>
       <footer
         aria-label="Document statistics"

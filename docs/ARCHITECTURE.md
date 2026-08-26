@@ -29,6 +29,9 @@ pretend a save succeeded before persistence completes.
 - `DocumentEditor` owns temporary Tiptap/title state and explicit save feedback.
 - `DocumentEditor` debounces autosave by edit version while retaining explicit
   Save for immediate persistence; an older response cannot clear newer changes.
+- `DocumentOutline` derives heading positions from the live Tiptap document and
+  navigates through the editor's existing scroll container without storing a
+  second copy of document content.
 - Tiptap stores the editor document as JSON, preserving required structure. Its
   StarterKit also supplies undo/redo, links, headings, lists, blockquotes, code
   blocks, and horizontal rules without changing the persistence contract.
