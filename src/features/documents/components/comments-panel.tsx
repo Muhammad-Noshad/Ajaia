@@ -152,11 +152,11 @@ export function CommentsPanel({
     <>
       <button
         aria-label="Close comments"
-        className="absolute inset-0 z-10 bg-foreground/20 md:hidden"
+        className="absolute inset-0 z-10 bg-foreground/20 min-[901px]:hidden"
         onClick={onClose}
         type="button"
       />
-      <aside className="absolute inset-y-0 right-0 z-20 flex w-full max-w-sm shrink-0 flex-col border-l border-border bg-card shadow-xl md:relative md:z-0 md:shadow-none">
+      <aside className="absolute inset-y-0 right-0 z-20 flex w-full max-w-sm shrink-0 flex-col border-l border-border bg-card shadow-xl min-[901px]:relative min-[901px]:z-0 min-[901px]:shadow-none">
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold">Comments</h2>

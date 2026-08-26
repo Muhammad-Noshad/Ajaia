@@ -177,15 +177,15 @@ export function DocumentWorkspace() {
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-background print:h-auto print:overflow-visible">
-      <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-4 sm:px-8 print:hidden">
-        <div className="flex size-9 items-center justify-center rounded-xl bg-brand-indigo text-primary-foreground">
+      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-3 py-3 sm:px-6 sm:py-4 min-[901px]:px-8 print:hidden">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-indigo text-primary-foreground">
           <FileText aria-hidden="true" className="size-5" />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-semibold tracking-tight">Ajaia Docs</p>
           <p className="text-xs text-muted-foreground">Focused work, clearly shared.</p>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
           {currentUser ? (
             <>
               <ImportDocumentButton onImported={handleImported} />
@@ -211,7 +211,7 @@ export function DocumentWorkspace() {
           </button>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row print:block print:h-auto print:overflow-visible">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden min-[901px]:flex-row print:block print:h-auto print:overflow-visible">
           <DocumentSidebar
             currentUserId={currentUser?.id ?? ""}
             currentUserName={currentUser?.name ?? "Demo user"}

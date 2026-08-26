@@ -27,7 +27,7 @@ export function DocumentSidebar({
   onSelect,
 }: DocumentSidebarProps) {
   return (
-    <aside className="flex w-full shrink-0 flex-col border-b border-border bg-muted/30 md:h-full md:min-h-0 md:w-72 md:overflow-y-auto md:border-b-0 md:border-r print:hidden">
+    <aside className="hidden w-full shrink-0 flex-col border-b border-border bg-muted/30 min-[901px]:flex min-[901px]:h-full min-[901px]:min-h-0 min-[901px]:w-72 min-[901px]:overflow-y-auto min-[901px]:border-b-0 min-[901px]:border-r print:hidden">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">Your workspace</p>
@@ -43,7 +43,7 @@ export function DocumentSidebar({
           {isCreating ? <Loader2 className="animate-spin" /> : <Plus />}
         </Button>
       </div>
-      <div className="flex gap-2 overflow-x-auto p-3 md:block md:space-y-1 md:overflow-visible">
+      <div className="block space-y-1 overflow-visible p-3">
         {documents.length === 0 ? (
           <p className="px-2 py-3 text-sm text-muted-foreground">
             No documents yet. Create your first one.
@@ -56,7 +56,7 @@ export function DocumentSidebar({
             return (
               <button
                 aria-current={isSelected ? "page" : undefined}
-                className={`flex min-w-52 items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors md:min-w-0 md:w-full ${
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                   isSelected
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted"

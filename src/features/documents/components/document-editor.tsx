@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { CommentsPanel } from "@/features/documents/components/comments-panel";
+import { DocumentActionsMenu } from "@/features/documents/components/document-actions-menu";
 import { DocumentOutline } from "@/features/documents/components/document-outline";
 import { DeleteDocumentDialog } from "@/features/documents/components/delete-document-dialog";
 import { VersionHistory } from "@/features/documents/components/version-history";
@@ -275,14 +276,30 @@ export function DocumentEditor({
     setIsHistoryOpen(false);
   }
 
+  function toggleOutline() {
+    setIsOutlineOpen((current) => !current);
+    setIsHistoryOpen(false);
+    setIsCommentsOpen(false);
+  }
+
+  function exportCurrentMarkdown() {
+    if (editor) {
+      exportMarkdown(editor, title);
+    }
+  }
+
+  function exportCurrentPdf() {
+    exportPdf(title);
+  }
+
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card print:block print:h-auto print:overflow-visible">
-      <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6 print:block print:border-0 print:px-0 print:py-0">
+      <header className="@container flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2 @min-[1100px]:gap-3 @min-[1100px]:px-6 @min-[1100px]:py-3 print:block print:border-0 print:px-0 print:py-0">
         <label className="sr-only" htmlFor="document-title">
           Document title
         </label>
         <input
-          className="min-w-0 flex-1 bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring print:hidden"
+          className="order-1 w-full min-w-0 max-w-full flex-1 truncate bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring @min-[1100px]:order-none @min-[1100px]:min-w-56 @min-[1100px]:w-auto @min-[1100px]:flex-[1_1_0%] print:hidden"
           id="document-title"
           maxLength={120}
           onChange={(event) => {
@@ -296,8 +313,8 @@ export function DocumentEditor({
         <h1 className="hidden text-2xl font-bold print:block print:pb-5">
           {title.trim() || "Untitled document"}
         </h1>
-        <div className="flex items-center gap-3 print:hidden">
-          <span className="text-xs text-muted-foreground" role="status">
+        <div className="order-2 flex w-full flex-wrap items-center gap-2 print:hidden @min-[1100px]:order-none @min-[1100px]:w-auto @min-[1100px]:gap-3">
+          <span className="shrink-0 text-xs text-muted-foreground" role="status">
             {!canEdit ? (
               "View only"
             ) : isSaving ? (
@@ -314,6 +331,7 @@ export function DocumentEditor({
               </>
             )}
           </span>
+          <div className="ml-auto hidden items-center gap-3 @min-[1100px]:flex">
           {document.ownerId === currentUserId ? (
             <>
               <Button onClick={onShare} type="button" variant="outline">
@@ -334,11 +352,7 @@ export function DocumentEditor({
           ) : null}
           <Button
             aria-pressed={isOutlineOpen}
-            onClick={() => {
-              setIsOutlineOpen((current) => !current);
-              setIsHistoryOpen(false);
-              setIsCommentsOpen(false);
-            }}
+            onClick={toggleOutline}
             type="button"
             variant="outline"
           >
@@ -364,12 +378,8 @@ export function DocumentEditor({
             Comments
           </Button>
           <ExportMenu
-            onExportMarkdown={() => {
-              if (editor) {
-                exportMarkdown(editor, title);
-              }
-            }}
-            onExportPdf={() => exportPdf(title)}
+            onExportMarkdown={exportCurrentMarkdown}
+            onExportPdf={exportCurrentPdf}
           />
           {canEdit ? (
             <Button
@@ -381,6 +391,34 @@ export function DocumentEditor({
               Save
             </Button>
           ) : null}
+          </div>
+          <div className="ml-auto flex items-center gap-2 @min-[1100px]:hidden">
+            <DocumentActionsMenu
+              canDelete={document.ownerId === currentUserId}
+              canShare={document.ownerId === currentUserId}
+              isCommentsOpen={isCommentsOpen}
+              isHistoryOpen={isHistoryOpen}
+              isOutlineOpen={isOutlineOpen}
+              onComments={toggleComments}
+              onDelete={openDeleteDialog}
+              onExportMarkdown={exportCurrentMarkdown}
+              onExportPdf={exportCurrentPdf}
+              onHistory={toggleHistory}
+              onOutline={toggleOutline}
+              onShare={onShare}
+            />
+            {canEdit ? (
+              <Button
+                disabled={!isDirty || isSaving}
+                onClick={() => void saveDocument()}
+                size="sm"
+                type="button"
+              >
+                {isSaving ? <Loader2 aria-hidden="true" className="animate-spin" /> : <Save aria-hidden="true" />}
+                Save
+              </Button>
+            ) : null}
+          </div>
         </div>
       </header>
       {canEdit ? (

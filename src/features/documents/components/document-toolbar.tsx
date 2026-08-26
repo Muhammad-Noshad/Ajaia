@@ -37,6 +37,8 @@ type ToolbarButtonProps = {
   onClick: () => void;
 };
 
+type ToolbarAction = ToolbarButtonProps & { id: string };
+
 const EMPTY_EDITOR_STATE = {
   canRedo: false,
   canUndo: false,
@@ -81,8 +83,8 @@ function ToolbarButton({
 }
 
 // This component is a thin command surface over Tiptap's StarterKit. Tiptap
-// owns history, selection, and formatting state; the toolbar only dispatches
-// commands and derives active/available states from the current editor.
+// owns history, selection, and formatting state; the controls remain visible
+// at every viewport width and the toolbar itself wraps when space is limited.
 export function DocumentToolbar({ editor }: DocumentToolbarProps) {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [initialLinkHref, setInitialLinkHref] = useState("");
@@ -94,8 +96,7 @@ export function DocumentToolbar({ editor }: DocumentToolbarProps) {
       }
 
       // Tiptap emits a transaction for edits, selection changes, undo, and
-      // redo. Subscribing here keeps button state synchronized with history
-      // instead of relying on unrelated React state to trigger a rerender.
+      // redo. Subscribing here keeps button state synchronized with history.
       return {
         canRedo: currentEditor.can().chain().focus().redo().run(),
         canUndo: currentEditor.can().chain().focus().undo().run(),
@@ -128,122 +129,142 @@ export function DocumentToolbar({ editor }: DocumentToolbarProps) {
     setIsLinkDialogOpen(true);
   }
 
+  const actions: Record<string, ToolbarAction> = {
+    undo: {
+      id: "undo",
+      disabled: !editorState.canUndo,
+      icon: Undo2,
+      label: "Undo",
+      onClick: () => editor.chain().focus().undo().run(),
+    },
+    redo: {
+      id: "redo",
+      disabled: !editorState.canRedo,
+      icon: Redo2,
+      label: "Redo",
+      onClick: () => editor.chain().focus().redo().run(),
+    },
+    bold: {
+      id: "bold",
+      active: editorState.isBold,
+      icon: Bold,
+      label: "Bold",
+      onClick: () => editor.chain().focus().toggleBold().run(),
+    },
+    italic: {
+      id: "italic",
+      active: editorState.isItalic,
+      icon: Italic,
+      label: "Italic",
+      onClick: () => editor.chain().focus().toggleItalic().run(),
+    },
+    underline: {
+      id: "underline",
+      active: editorState.isUnderline,
+      icon: Underline,
+      label: "Underline",
+      onClick: () => editor.chain().focus().toggleUnderline().run(),
+    },
+    strike: {
+      id: "strike",
+      active: editorState.isStrike,
+      icon: Strikethrough,
+      label: "Strikethrough",
+      onClick: () => editor.chain().focus().toggleStrike().run(),
+    },
+    link: {
+      id: "link",
+      active: editorState.isLink,
+      icon: Link,
+      label: editorState.isLink ? "Edit link" : "Add link",
+      onClick: openLinkDialog,
+    },
+    clear: {
+      id: "clear",
+      icon: RemoveFormatting,
+      label: "Clear formatting",
+      onClick: () => editor.chain().focus().clearNodes().unsetAllMarks().run(),
+    },
+    heading1: {
+      id: "heading1",
+      active: editorState.isHeading1,
+      icon: Heading1,
+      label: "Heading 1",
+      onClick: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+    },
+    heading2: {
+      id: "heading2",
+      active: editorState.isHeading2,
+      icon: Heading2,
+      label: "Heading 2",
+      onClick: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+    },
+    heading3: {
+      id: "heading3",
+      active: editorState.isHeading3,
+      icon: Heading3,
+      label: "Heading 3",
+      onClick: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+    },
+    blockquote: {
+      id: "blockquote",
+      active: editorState.isBlockquote,
+      icon: Quote,
+      label: "Blockquote",
+      onClick: () => editor.chain().focus().toggleBlockquote().run(),
+    },
+    codeBlock: {
+      id: "codeBlock",
+      active: editorState.isCodeBlock,
+      icon: Code2,
+      label: "Code block",
+      onClick: () => editor.chain().focus().toggleCodeBlock().run(),
+    },
+    bulletList: {
+      id: "bulletList",
+      active: editorState.isBulletList,
+      icon: List,
+      label: "Bulleted list",
+      onClick: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    orderedList: {
+      id: "orderedList",
+      active: editorState.isOrderedList,
+      icon: ListOrdered,
+      label: "Numbered list",
+      onClick: () => editor.chain().focus().toggleOrderedList().run(),
+    },
+    divider: {
+      id: "divider",
+      icon: SeparatorHorizontal,
+      label: "Insert divider",
+      onClick: () => editor.chain().focus().setHorizontalRule().run(),
+    },
+  };
+  const toolbarGroups = [
+    [actions.undo, actions.redo],
+    [actions.bold, actions.italic, actions.underline, actions.strike, actions.link, actions.clear],
+    [actions.heading1, actions.heading2, actions.heading3, actions.blockquote, actions.codeBlock],
+    [actions.bulletList, actions.orderedList, actions.divider],
+  ];
+
   return (
     <>
       <div
         aria-label="Formatting toolbar"
-        className="flex flex-wrap items-center gap-1 border-b border-border px-4 py-2"
+        className="flex min-w-0 flex-wrap items-center gap-1 border-b border-border px-3 py-2 sm:px-4"
         role="toolbar"
       >
-      <ToolbarButton
-        disabled={!editorState.canUndo}
-        icon={Undo2}
-        label="Undo"
-        onClick={() => editor.chain().focus().undo().run()}
-      />
-      <ToolbarButton
-        disabled={!editorState.canRedo}
-        icon={Redo2}
-        label="Redo"
-        onClick={() => editor.chain().focus().redo().run()}
-      />
-
-      <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
-
-      <ToolbarButton
-        active={editorState.isBold}
-        icon={Bold}
-        label="Bold"
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      />
-      <ToolbarButton
-        active={editorState.isItalic}
-        icon={Italic}
-        label="Italic"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      />
-      <ToolbarButton
-        active={editorState.isUnderline}
-        icon={Underline}
-        label="Underline"
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-      />
-      <ToolbarButton
-        active={editorState.isStrike}
-        icon={Strikethrough}
-        label="Strikethrough"
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-      />
-      <ToolbarButton
-        active={editorState.isLink}
-        icon={Link}
-        label={editorState.isLink ? "Edit link" : "Add link"}
-        onClick={openLinkDialog}
-      />
-      <ToolbarButton
-        icon={RemoveFormatting}
-        label="Clear formatting"
-        onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-      />
-
-      <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
-
-      <ToolbarButton
-        active={editorState.isHeading1}
-        icon={Heading1}
-        label="Heading 1"
-        onClick={() =>
-          editor.chain().focus().toggleHeading({ level: 1 }).run()
-        }
-      />
-      <ToolbarButton
-        active={editorState.isHeading2}
-        icon={Heading2}
-        label="Heading 2"
-        onClick={() =>
-          editor.chain().focus().toggleHeading({ level: 2 }).run()
-        }
-      />
-      <ToolbarButton
-        active={editorState.isHeading3}
-        icon={Heading3}
-        label="Heading 3"
-        onClick={() =>
-          editor.chain().focus().toggleHeading({ level: 3 }).run()
-        }
-      />
-      <ToolbarButton
-        active={editorState.isBlockquote}
-        icon={Quote}
-        label="Blockquote"
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-      />
-      <ToolbarButton
-        active={editorState.isCodeBlock}
-        icon={Code2}
-        label="Code block"
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-      />
-
-      <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
-
-      <ToolbarButton
-        active={editorState.isBulletList}
-        icon={List}
-        label="Bulleted list"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-      />
-      <ToolbarButton
-        active={editorState.isOrderedList}
-        icon={ListOrdered}
-        label="Numbered list"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-      />
-      <ToolbarButton
-        icon={SeparatorHorizontal}
-        label="Insert divider"
-        onClick={() => editor.chain().focus().setHorizontalRule().run()}
-      />
+        {toolbarGroups.map((group, groupIndex) => (
+          <div className="flex max-w-full min-w-0 flex-wrap items-center gap-1" key={groupIndex}>
+            {groupIndex > 0 ? (
+              <span aria-hidden="true" className="mx-1 h-5 w-px bg-border" />
+            ) : null}
+            {group.map((action) => (
+              <ToolbarButton {...action} key={action.id} />
+            ))}
+          </div>
+        ))}
       </div>
       {isLinkDialogOpen ? (
         <LinkDialog
