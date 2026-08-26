@@ -73,6 +73,13 @@ export function DocumentEditor({
     },
   });
 
+  const editorText = editor?.getText() ?? "";
+  const trimmedEditorText = editorText.trim();
+  const editorStats = {
+    characters: Array.from(editorText).length,
+    words: trimmedEditorText ? trimmedEditorText.split(/\s+/u).length : 0,
+  };
+
   const saveDocument = useCallback(
     async function saveDocument({ notify = true }: SaveOptions = {}) {
       if (!editor || isSaving || !isDirty) {
@@ -222,6 +229,13 @@ export function DocumentEditor({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <EditorContent editor={editor} />
       </div>
+      <footer
+        aria-label="Document statistics"
+        className="flex shrink-0 items-center justify-between gap-4 border-t border-border px-5 py-2 text-xs text-muted-foreground sm:px-10"
+      >
+        <span>{editorStats.words.toLocaleString()} words</span>
+        <span>{editorStats.characters.toLocaleString()} characters</span>
+      </footer>
     </section>
   );
 }

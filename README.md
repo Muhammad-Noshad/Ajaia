@@ -30,7 +30,8 @@ into new editable documents and the original binary is not stored.
 
 Document changes autosave 1.2 seconds after editing stops. The explicit Save
 button remains available for immediate persistence and displays the latest save
-time or a retry-needed state when saving fails.
+time or a retry-needed state when saving fails. The editor footer also shows
+live word and character counts.
 
 Open [http://localhost:3000](http://localhost:3000).
 
