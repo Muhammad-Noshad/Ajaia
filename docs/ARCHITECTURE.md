@@ -27,7 +27,9 @@ pretend a save succeeded before persistence completes.
 - `src/app/page.tsx` is a thin route entry point.
 - `DocumentWorkspace` owns document list, selection, loading, and network state.
 - `DocumentEditor` owns temporary Tiptap/title state and explicit save feedback.
-- Tiptap stores the editor document as JSON, preserving required structure.
+- Tiptap stores the editor document as JSON, preserving required structure. Its
+  StarterKit also supplies undo/redo, links, headings, lists, blockquotes, code
+  blocks, and horizontal rules without changing the persistence contract.
 - `DocumentSidebar` derives Owned/Shared labels from the server-provided owner ID.
 - Share and import controls are narrow client components around API calls.
 

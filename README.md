@@ -10,7 +10,8 @@ and text/Markdown import without pretending to implement Google Docs in full.
 - shadcn/ui (Base UI/Nova preset) and Lucide React
 - React Hook Form, Zod, and `@hookform/resolvers`
 - Mongoose/MongoDB and Sonner notifications
-- Tiptap rich-text editing and Vitest access-rule tests
+- Tiptap rich-text editing (history, links, headings, lists, blockquotes, code
+  blocks, and dividers) and Vitest access-rule tests
 
 ## Setup
 

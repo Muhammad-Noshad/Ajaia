@@ -37,6 +37,7 @@ export function DocumentEditor({
       attributes: {
         class:
           "min-h-[420px] px-5 py-6 text-base leading-8 outline-none sm:px-10",
+        "aria-label": "Document content",
       },
     },
     onUpdate: () => setIsDirty(true),

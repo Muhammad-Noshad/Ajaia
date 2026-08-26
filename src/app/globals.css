@@ -166,6 +166,21 @@
     line-height: 1.2;
   }
 
+  .tiptap h2,
+  .tiptap h3 {
+    margin: 1.25rem 0 0.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .tiptap h2 {
+    font-size: 1.5rem;
+  }
+
+  .tiptap h3 {
+    font-size: 1.25rem;
+  }
+
   .tiptap ul,
   .tiptap ol {
     margin: 0.75rem 0;
@@ -182,5 +197,49 @@
 
   .tiptap li p {
     margin: 0.25rem 0;
+  }
+
+  .tiptap blockquote {
+    margin: 1rem 0;
+    border-left: 3px solid var(--brand-mint);
+    padding-left: 1rem;
+    color: var(--muted-foreground);
+  }
+
+  .tiptap pre {
+    margin: 1rem 0;
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    background: var(--brand-ink);
+    padding: 1rem;
+    color: var(--background);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .tiptap code {
+    border-radius: 0.25rem;
+    background: color-mix(in oklab, var(--muted) 75%, transparent);
+    padding: 0.1rem 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  .tiptap pre code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .tiptap hr {
+    margin: 1.5rem 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .tiptap a {
+    color: var(--brand-indigo);
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
