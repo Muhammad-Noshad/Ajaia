@@ -41,6 +41,9 @@ pretend a save succeeded before persistence completes.
   read-only Tiptap preview lets users inspect formatting before restoring;
   restores update the live editor and create a new snapshot, so a restore can
   itself be reversed.
+- Comments are stored as document metadata in a separate subcollection. Each
+  comment keeps a selected-text quote and Tiptap range; creating a comment does
+  not modify document content, which allows viewers to participate safely.
 - Tiptap stores the editor document as JSON, preserving required structure. Its
   StarterKit also supplies undo/redo, links, headings, lists, blockquotes, code
   blocks, and horizontal rules without changing the persistence contract.
@@ -61,6 +64,8 @@ Route Handlers live under `src/app/api`:
 | `GET/PUT/DELETE /api/documents/:id` | Read/save an accessible document; delete is owner-only |
 | `GET /api/documents/:id/versions` | List the 50 newest accessible versions |
 | `POST /api/documents/:id/versions/:versionId/restore` | Restore an accessible version |
+| `GET/POST /api/documents/:id/comments` | List or create comments for accessible users |
+| `DELETE /api/documents/:id/comments/:commentId` | Delete an authored comment or owner-moderated comment |
 | `POST /api/documents/:id/share` | Owner-only access grant |
 | `POST /api/documents/import` | Validate and import `.txt`/`.md` text |
 | `GET/POST /api/session` | Read or set the demo-user cookie |

@@ -23,3 +23,14 @@ export type DocumentVersionView = {
   createdById: string;
   createdAt: string;
 };
+
+export type CommentView = {
+  id: string;
+  text: string;
+  quote: string;
+  from: number;
+  to: number;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+};

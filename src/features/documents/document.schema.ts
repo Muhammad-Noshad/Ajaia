@@ -44,6 +44,8 @@ export const documentIdSchema = z
 
 export const versionIdSchema = documentIdSchema;
 
+export const commentIdSchema = documentIdSchema;
+
 export const createDocumentSchema = z.object({
   title: documentTitleSchema,
   content: richTextContentSchema,
@@ -61,6 +63,18 @@ export const importedDocumentSchema = z.object({
   text: z.string().trim().min(1).max(1_000_000),
 });
 
+export const createCommentSchema = z
+  .object({
+    text: z.string().trim().min(1, "Comment cannot be empty").max(2_000),
+    quote: z.string().trim().min(1).max(500),
+    from: z.number().int().nonnegative(),
+    to: z.number().int().nonnegative(),
+  })
+  .refine((input) => input.to > input.from, {
+    message: "A comment must target selected text",
+    path: ["to"],
+  });
+
 export type CreateDocumentInput = z.infer<typeof createDocumentSchema>;
 export type UpdateDocumentInput = z.infer<typeof updateDocumentSchema>;
 export type RichTextContent = JSONContent & {
@@ -68,3 +82,4 @@ export type RichTextContent = JSONContent & {
   content: JSONContent[];
 };
 export type ShareDocumentInput = z.infer<typeof shareDocumentSchema>;
+export type CreateCommentInput = z.infer<typeof createCommentSchema>;

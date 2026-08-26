@@ -6,6 +6,7 @@ import {
   History,
   ListTree,
   Loader2,
+  MessageSquare,
   Save,
   Share2,
   Trash2,
@@ -16,6 +17,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { CommentsPanel } from "@/features/documents/components/comments-panel";
 import { DocumentOutline } from "@/features/documents/components/document-outline";
 import { DeleteDocumentDialog } from "@/features/documents/components/delete-document-dialog";
 import { VersionHistory } from "@/features/documents/components/version-history";
@@ -114,6 +116,7 @@ export function DocumentEditor({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isOutlineOpen, setIsOutlineOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [changeVersion, setChangeVersion] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState(
@@ -263,6 +266,13 @@ export function DocumentEditor({
   function toggleHistory() {
     setIsHistoryOpen((current) => !current);
     setIsOutlineOpen(false);
+    setIsCommentsOpen(false);
+  }
+
+  function toggleComments() {
+    setIsCommentsOpen((current) => !current);
+    setIsOutlineOpen(false);
+    setIsHistoryOpen(false);
   }
 
   return (
@@ -327,6 +337,7 @@ export function DocumentEditor({
             onClick={() => {
               setIsOutlineOpen((current) => !current);
               setIsHistoryOpen(false);
+              setIsCommentsOpen(false);
             }}
             type="button"
             variant="outline"
@@ -342,6 +353,15 @@ export function DocumentEditor({
           >
             <History aria-hidden="true" />
             History
+          </Button>
+          <Button
+            aria-pressed={isCommentsOpen}
+            onClick={toggleComments}
+            type="button"
+            variant="outline"
+          >
+            <MessageSquare aria-hidden="true" />
+            Comments
           </Button>
           <ExportMenu
             onExportMarkdown={() => {
@@ -394,6 +414,14 @@ export function DocumentEditor({
               lastAutosavedVersionRef.current = changeVersionRef.current;
               onSaved(restoredDocument);
             }}
+          />
+        ) : null}
+        {isCommentsOpen ? (
+          <CommentsPanel
+            currentUserId={currentUserId}
+            document={document}
+            editor={editor}
+            onClose={() => setIsCommentsOpen(false)}
           />
         ) : null}
       </div>

@@ -1,16 +1,20 @@
 import { ApplicationError } from "@/lib/application-error";
 import type {
+  CommentView,
   DocumentVersionView,
   DocumentView,
 } from "@/features/documents/document.types";
 import {
+  createCommentSchema,
   createDocumentSchema,
+  commentIdSchema,
   documentIdSchema,
   importedDocumentSchema,
   shareDocumentSchema,
   updateDocumentSchema,
   versionIdSchema,
   type CreateDocumentInput,
+  type CreateCommentInput,
   type RichTextContent,
   type ShareDocumentInput,
   type UpdateDocumentInput,
@@ -23,9 +27,13 @@ import {
 } from "@/features/documents/server/document-access";
 import {
   addStoredDocumentShare,
+  createStoredDocumentComment,
   createStoredDocument,
+  deleteStoredDocumentComment,
   deleteStoredDocument,
   getStoredDocument,
+  getStoredDocumentComment,
+  listStoredDocumentComments,
   listStoredDocumentVersions,
   listStoredDocuments,
   restoreStoredDocumentVersion,
@@ -152,6 +160,74 @@ export async function listDocumentVersions(
   }
 
   return listStoredDocumentVersions(parsedDocumentId);
+}
+
+/** Lists comments for every user who can view the document. */
+export async function listDocumentComments(
+  userId: string,
+  documentId: string,
+): Promise<CommentView[]> {
+  const parsedDocumentId = parseDocumentId(documentId);
+  const document = await getStoredDocument(parsedDocumentId);
+
+  if (!document || !canAccessDocument(document, userId)) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  return listStoredDocumentComments(parsedDocumentId);
+}
+
+/** Creates a comment for any user with document access, including viewers. */
+export async function createDocumentComment(
+  userId: string,
+  documentId: string,
+  input: CreateCommentInput,
+): Promise<CommentView> {
+  const parsedDocumentId = parseDocumentId(documentId);
+  const parsedInput = createCommentSchema.parse(input);
+  const document = await getStoredDocument(parsedDocumentId);
+
+  if (!document || !canAccessDocument(document, userId)) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  return createStoredDocumentComment(parsedDocumentId, {
+    ...parsedInput,
+    authorId: userId,
+  });
+}
+
+/** Allows comment authors and owners to remove comments. */
+export async function deleteDocumentComment(
+  userId: string,
+  documentId: string,
+  commentId: string,
+): Promise<void> {
+  const parsedDocumentId = parseDocumentId(documentId);
+  const parsedCommentId = commentIdSchema.parse(commentId);
+  const document = await getStoredDocument(parsedDocumentId);
+
+  if (!document || !canAccessDocument(document, userId)) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  const comment = await getStoredDocumentComment(
+    parsedDocumentId,
+    parsedCommentId,
+  );
+
+  if (!comment) {
+    throw new ApplicationError("NOT_FOUND", "Comment not found");
+  }
+
+  if (comment.authorId !== userId && document.ownerId !== userId) {
+    throw new ApplicationError(
+      "FORBIDDEN",
+      "Only the comment author or document owner can delete this comment",
+    );
+  }
+
+  await deleteStoredDocumentComment(parsedDocumentId, parsedCommentId);
 }
 
 /** Restores a version only for owners and editors because it changes content. */

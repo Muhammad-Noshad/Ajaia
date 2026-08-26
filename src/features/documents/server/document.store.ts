@@ -10,6 +10,7 @@ import type {
 } from "@/features/documents/document.schema";
 import type { DocumentView } from "@/features/documents/document.types";
 import type {
+  CommentView,
   DocumentVersionView,
   SharedDocumentRole,
 } from "@/features/documents/document.types";
@@ -32,10 +33,24 @@ type FirestoreVersion = {
   createdAt: Timestamp;
 };
 
+type FirestoreComment = {
+  text: string;
+  quote: string;
+  from: number;
+  to: number;
+  authorId: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};
+
 const documents = firestore.collection("documents");
 
 function documentVersions(documentId: string) {
   return documents.doc(documentId).collection("versions");
+}
+
+function documentComments(documentId: string) {
+  return documents.doc(documentId).collection("comments");
 }
 
 function timestampToDate(value: Timestamp | Date | null | undefined): Date {
@@ -96,6 +111,26 @@ function serializeVersion(
     content: data.content,
     createdById: data.createdById,
     createdAt: timestampToDate(data.createdAt).toISOString(),
+  };
+}
+
+/** Converts a comment snapshot into a transport-safe view. */
+function serializeComment(snapshot: DocumentSnapshot): CommentView | null {
+  if (!snapshot.exists) {
+    return null;
+  }
+
+  const data = snapshot.data() as FirestoreComment;
+
+  return {
+    id: snapshot.id,
+    text: data.text,
+    quote: data.quote,
+    from: data.from,
+    to: data.to,
+    authorId: data.authorId,
+    createdAt: timestampToDate(data.createdAt).toISOString(),
+    updatedAt: timestampToDate(data.updatedAt).toISOString(),
   };
 }
 
@@ -245,6 +280,68 @@ export async function listStoredDocumentVersions(
     .filter((version): version is DocumentVersionView => version !== null);
 }
 
+/** Lists comments newest first without coupling comments to document content. */
+export async function listStoredDocumentComments(
+  documentId: string,
+): Promise<CommentView[]> {
+  const snapshot = await documentComments(documentId)
+    .orderBy("createdAt", "desc")
+    .limit(100)
+    .get();
+
+  return snapshot.docs
+    .map(serializeComment)
+    .filter((comment): comment is CommentView => comment !== null);
+}
+
+/** Creates a comment for a selected text range. */
+export async function createStoredDocumentComment(
+  documentId: string,
+  input: {
+    text: string;
+    quote: string;
+    from: number;
+    to: number;
+    authorId: string;
+  },
+): Promise<CommentView> {
+  const now = Timestamp.now();
+  const reference = await documentComments(documentId).add({
+    text: input.text,
+    quote: input.quote,
+    from: input.from,
+    to: input.to,
+    authorId: input.authorId,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const comment = serializeComment(await reference.get());
+
+  if (!comment) {
+    throw new Error("Firestore did not return the created comment");
+  }
+
+  return comment;
+}
+
+/** Reads one comment to authorize a targeted delete. */
+export async function getStoredDocumentComment(
+  documentId: string,
+  commentId: string,
+): Promise<CommentView | null> {
+  return serializeComment(
+    await documentComments(documentId).doc(commentId).get(),
+  );
+}
+
+/** Deletes one comment after the service has checked its permissions. */
+export async function deleteStoredDocumentComment(
+  documentId: string,
+  commentId: string,
+): Promise<void> {
+  await documentComments(documentId).doc(commentId).delete();
+}
+
 /** Restores a version and records that restoration as a new version. */
 export async function restoreStoredDocumentVersion(
   documentId: string,
@@ -297,9 +394,13 @@ export async function restoreStoredDocumentVersion(
 
 /** Deletes a document and its version subcollection in safe batch sizes. */
 export async function deleteStoredDocument(documentId: string): Promise<void> {
-  const versionSnapshot = await documentVersions(documentId).get();
+  const [versionSnapshot, commentSnapshot] = await Promise.all([
+    documentVersions(documentId).get(),
+    documentComments(documentId).get(),
+  ]);
   const references = [
     ...versionSnapshot.docs.map((snapshot) => snapshot.ref),
+    ...commentSnapshot.docs.map((snapshot) => snapshot.ref),
     documents.doc(documentId),
   ];
 

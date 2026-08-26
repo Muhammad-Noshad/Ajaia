@@ -59,6 +59,9 @@ current state is preserved in history after every restore.
 Sharing supports two collaborator roles: **Editor** can edit, rename, export,
 preview history, and restore versions; **Viewer** can view, export, and preview
 history only. Owners alone can share, change roles, and delete documents.
+All roles can add comments to selected text and view existing comments. Comment
+authors can delete their own comments, while the document owner can moderate any
+comment.
 
 Open [http://localhost:3000](http://localhost:3000).
 
