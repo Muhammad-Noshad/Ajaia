@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Bold,
   Code2,
@@ -17,12 +18,12 @@ import {
   Strikethrough,
   Underline,
   Undo2,
-  Unlink,
   type LucideIcon,
 } from "lucide-react";
 import type { Editor } from "@tiptap/react";
 
 import { Button } from "@/components/ui/button";
+import { LinkDialog } from "@/features/documents/components/link-dialog";
 
 type DocumentToolbarProps = {
   editor: Editor | null;
@@ -62,49 +63,33 @@ function ToolbarButton({
   );
 }
 
-// Link marks need a URL input, but the editor still owns the resulting mark and
-// persistence remains unchanged. Existing links are removed with the same
-// control, which keeps the toolbar useful without adding another form surface.
-function toggleLink(editor: Editor) {
-  if (editor.isActive("link")) {
-    editor.chain().focus().unsetLink().run();
-    return;
-  }
-
-  const href = window.prompt("Enter a URL", "https://");
-  if (!href?.trim()) {
-    return;
-  }
-
-  const normalizedHref = /^https?:\/\//i.test(href.trim())
-    ? href.trim()
-    : `https://${href.trim()}`;
-
-  editor
-    .chain()
-    .focus()
-    .setLink({
-      href: normalizedHref,
-      target: "_blank",
-      rel: "noopener noreferrer",
-    })
-    .run();
-}
-
 // This component is a thin command surface over Tiptap's StarterKit. Tiptap
 // owns history, selection, and formatting state; the toolbar only dispatches
 // commands and derives active/available states from the current editor.
 export function DocumentToolbar({ editor }: DocumentToolbarProps) {
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [initialLinkHref, setInitialLinkHref] = useState("");
+
   if (!editor) {
     return null;
   }
 
+  const activeEditor = editor;
+
+  function openLinkDialog() {
+    setInitialLinkHref(
+      (activeEditor.getAttributes("link").href as string | undefined) ?? "",
+    );
+    setIsLinkDialogOpen(true);
+  }
+
   return (
-    <div
-      aria-label="Formatting toolbar"
-      className="flex flex-wrap items-center gap-1 border-b border-border px-4 py-2"
-      role="toolbar"
-    >
+    <>
+      <div
+        aria-label="Formatting toolbar"
+        className="flex flex-wrap items-center gap-1 border-b border-border px-4 py-2"
+        role="toolbar"
+      >
       <ToolbarButton
         disabled={!editor.can().chain().focus().undo().run()}
         icon={Undo2}
@@ -146,9 +131,9 @@ export function DocumentToolbar({ editor }: DocumentToolbarProps) {
       />
       <ToolbarButton
         active={editor.isActive("link")}
-        icon={editor.isActive("link") ? Unlink : Link}
-        label={editor.isActive("link") ? "Remove link" : "Add link"}
-        onClick={() => toggleLink(editor)}
+        icon={Link}
+        label={editor.isActive("link") ? "Edit link" : "Add link"}
+        onClick={openLinkDialog}
       />
       <ToolbarButton
         icon={RemoveFormatting}
@@ -214,6 +199,14 @@ export function DocumentToolbar({ editor }: DocumentToolbarProps) {
         label="Insert divider"
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
       />
-    </div>
+      </div>
+      {isLinkDialogOpen ? (
+        <LinkDialog
+          editor={editor}
+          initialHref={initialLinkHref}
+          onClose={() => setIsLinkDialogOpen(false)}
+        />
+      ) : null}
+    </>
   );
 }
