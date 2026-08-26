@@ -13,7 +13,7 @@ external submission items for Ajaia Docs.
 - [x] Live product URL: [https://ajaiadocs-three.vercel.app/](https://ajaiadocs-three.vercel.app/)
 - [x] Public 3-5 minute walkthrough video URL: https://www.loom.com/share/2531b12c98564acea8d7d9d8d0c50c33
 - [x] `WALKTHROUGH_URL.txt` updated with the final video URL
-- [x] Google Drive source archive: [Download code ZIP](https://drive.google.com/file/d/1CwPLGv9HZY0somZJyghXOe7kgmFwLUgx/view?usp=sharing)
+- [x] Google Drive source archive: [Download code ZIP](https://drive.google.com/file/d/1e3YcpPo512zbjBflARRT1kWmEv_BSiJj/view?usp=sharing)
 
 The live product and walkthrough are available at the URLs above. The Google
 Drive submission folder link must still be added before submission.
@@ -132,16 +132,3 @@ These are the highest-value product improvements after the submitted scope:
    label and read-only editing behavior.
 6. Return to Alice to demonstrate comments, history preview/restore, exports,
    and owner-only controls.
-
-## Final verification checklist
-
-- [x] Local create/edit/save/reload flow
-- [x] Rich formatting survives reload
-- [x] Import success and invalid-file errors
-- [x] Alice shares with Bob and Bob sees Shared
-- [x] Bob cannot access an unshared document
-- [x] `npm run test`
-- [x] `npm run lint`
-- [x] `npm run build`
-- [ ] Deployed smoke test
-- [ ] README, architecture, AI note, video, and external links are complete
