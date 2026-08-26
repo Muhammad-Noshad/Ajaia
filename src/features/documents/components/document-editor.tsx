@@ -7,6 +7,7 @@ import {
   ListTree,
   Loader2,
   MessageSquare,
+  PanelLeftOpen,
   Save,
   Share2,
   Trash2,
@@ -33,6 +34,7 @@ type DocumentEditorProps = {
   onSaved: (document: DocumentView) => void;
   onShare: () => void;
   onDeleted: (documentId: string) => void;
+  onOpenSidebar: () => void;
 };
 
 type SaveOptions = {
@@ -107,6 +109,7 @@ export function DocumentEditor({
   onSaved,
   onShare,
   onDeleted,
+  onOpenSidebar,
 }: DocumentEditorProps) {
   const documentRole = getDocumentRole(document, currentUserId);
   const canEdit = documentRole === "owner" || documentRole === "editor";
@@ -298,18 +301,31 @@ export function DocumentEditor({
         <label className="sr-only" htmlFor="document-title">
           Document title
         </label>
-        <input
-          className="order-1 w-full min-w-0 max-w-full flex-1 truncate bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring @min-[1100px]:order-none @min-[1100px]:min-w-56 @min-[1100px]:w-auto @min-[1100px]:flex-[1_1_0%] print:hidden"
-          id="document-title"
-          maxLength={120}
-          onChange={(event) => {
-            setTitle(event.target.value);
-            markDirty();
-          }}
-          placeholder="Untitled document"
-          readOnly={!canEdit}
-          value={title}
-        />
+        <div className="order-1 flex w-full min-w-0 flex-1 items-center gap-2 @min-[1100px]:order-none @min-[1100px]:w-auto">
+          <Button
+            aria-label="Open workspace documents"
+            className="min-[901px]:hidden"
+            onClick={onOpenSidebar}
+            size="icon"
+            title="Open workspace documents"
+            type="button"
+            variant="ghost"
+          >
+            <PanelLeftOpen aria-hidden="true" />
+          </Button>
+          <input
+            className="w-full min-w-0 flex-1 truncate bg-transparent text-lg font-semibold outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring @min-[1100px]:min-w-56 @min-[1100px]:w-auto @min-[1100px]:flex-[1_1_0%] print:hidden"
+            id="document-title"
+            maxLength={120}
+            onChange={(event) => {
+              setTitle(event.target.value);
+              markDirty();
+            }}
+            placeholder="Untitled document"
+            readOnly={!canEdit}
+            value={title}
+          />
+        </div>
         <h1 className="hidden text-2xl font-bold print:block print:pb-5">
           {title.trim() || "Untitled document"}
         </h1>

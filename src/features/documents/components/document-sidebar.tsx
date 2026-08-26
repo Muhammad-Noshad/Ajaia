@@ -1,9 +1,10 @@
 "use client";
 
-import { FileText, Loader2, Plus } from "lucide-react";
+import { FileText, Loader2, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { DocumentView } from "@/features/documents/document.types";
+import { cn } from "@/lib/utils";
 
 type DocumentSidebarProps = {
   documents: DocumentView[];
@@ -11,7 +12,9 @@ type DocumentSidebarProps = {
   currentUserId: string;
   currentUserName: string;
   isCreating: boolean;
+  className?: string;
   onCreate: () => void;
+  onClose?: () => void;
   onSelect: (documentId: string) => void;
 };
 
@@ -23,25 +26,45 @@ export function DocumentSidebar({
   currentUserId,
   currentUserName,
   isCreating,
+  className,
   onCreate,
+  onClose,
   onSelect,
 }: DocumentSidebarProps) {
   return (
-    <aside className="hidden w-full shrink-0 flex-col border-b border-border bg-muted/30 min-[901px]:flex min-[901px]:h-full min-[901px]:min-h-0 min-[901px]:w-72 min-[901px]:overflow-y-auto min-[901px]:border-b-0 min-[901px]:border-r print:hidden">
+    <aside
+      className={cn(
+        "w-full shrink-0 flex-col border-border bg-muted/30 print:hidden",
+        className,
+      )}
+    >
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">Your workspace</p>
           <p className="truncate text-xs text-muted-foreground">{currentUserName}</p>
         </div>
-        <Button
-          aria-label="Create document"
-          disabled={isCreating}
-          onClick={onCreate}
-          size="icon"
-          type="button"
-        >
-          {isCreating ? <Loader2 className="animate-spin" /> : <Plus />}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            aria-label="Create document"
+            disabled={isCreating}
+            onClick={onCreate}
+            size="icon"
+            type="button"
+          >
+            {isCreating ? <Loader2 className="animate-spin" /> : <Plus />}
+          </Button>
+          {onClose ? (
+            <Button
+              aria-label="Close workspace documents"
+              onClick={onClose}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <X aria-hidden="true" />
+            </Button>
+          ) : null}
+        </div>
       </div>
       <div className="block space-y-1 overflow-visible p-3">
         {documents.length === 0 ? (

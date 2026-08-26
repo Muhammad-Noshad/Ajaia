@@ -29,6 +29,7 @@ export function DocumentWorkspace() {
   const [isCreating, setIsCreating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [shareDocumentId, setShareDocumentId] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const requestDocuments = useCallback(async function requestDocuments() {
     const response = await fetch("/api/documents", { cache: "no-store" });
@@ -79,6 +80,35 @@ export function DocumentWorkspace() {
       isActive = false;
     };
   }, [applyDocuments, requestDocuments]);
+
+  // Close a mobile drawer that was opened before a viewport resize crosses
+  // into the desktop layout. This avoids stale overlay state when resizing.
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 901px)");
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    desktopQuery.addEventListener("change", closeOnDesktop);
+    return () => desktopQuery.removeEventListener("change", closeOnDesktop);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen) {
+      return;
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMobileSidebarOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isMobileSidebarOpen]);
 
   async function retryLoad() {
     setIsLoading(true);
@@ -132,6 +162,7 @@ export function DocumentWorkspace() {
 
       setDocuments((currentDocuments) => [result.document!, ...currentDocuments]);
       setSelectedDocumentId(result.document.id);
+      setIsMobileSidebarOpen(false);
       toast.success("Document created");
     } catch (error) {
       toast.error(
@@ -211,8 +242,9 @@ export function DocumentWorkspace() {
           </button>
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden min-[901px]:flex-row print:block print:h-auto print:overflow-visible">
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden min-[901px]:flex-row print:block print:h-auto print:overflow-visible">
           <DocumentSidebar
+            className="hidden min-[901px]:flex min-[901px]:h-full min-[901px]:min-h-0 min-[901px]:w-72 min-[901px]:overflow-y-auto min-[901px]:border-b-0 min-[901px]:border-r"
             currentUserId={currentUser?.id ?? ""}
             currentUserName={currentUser?.name ?? "Demo user"}
             documents={documents}
@@ -228,6 +260,7 @@ export function DocumentWorkspace() {
               key={selectedDocument.id}
               onSaved={handleSaved}
               onDeleted={handleDeleted}
+              onOpenSidebar={() => setIsMobileSidebarOpen(true)}
               onShare={() => setShareDocumentId(selectedDocument.id)}
             />
           ) : (
@@ -247,6 +280,35 @@ export function DocumentWorkspace() {
               </div>
             </section>
           )}
+          {isMobileSidebarOpen && currentUser ? (
+            <div
+              aria-label="Workspace documents"
+              aria-modal="true"
+              className="absolute inset-0 z-30 min-[901px]:hidden"
+              role="dialog"
+            >
+              <button
+                aria-label="Close workspace documents"
+                className="absolute inset-0 bg-foreground/20"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                type="button"
+              />
+              <DocumentSidebar
+                className="absolute inset-y-0 left-0 z-10 flex h-full w-[min(20rem,88vw)] overflow-y-auto border-r bg-card shadow-xl"
+                currentUserId={currentUser.id}
+                currentUserName={currentUser.name}
+                documents={documents}
+                isCreating={isCreating}
+                onClose={() => setIsMobileSidebarOpen(false)}
+                onCreate={() => void createDocument()}
+                onSelect={(documentId) => {
+                  setSelectedDocumentId(documentId);
+                  setIsMobileSidebarOpen(false);
+                }}
+                selectedDocumentId={selectedDocumentId}
+              />
+            </div>
+          ) : null}
         </div>
       )}
       {documentToShare && currentUser ? (
