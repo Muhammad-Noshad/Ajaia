@@ -12,11 +12,13 @@ import {
 } from "@/features/documents/document.schema";
 import {
   canAccessDocument,
+  canDeleteDocument,
   canManageSharing,
 } from "@/features/documents/server/document-access";
 import {
   addStoredDocumentShare,
   createStoredDocument,
+  deleteStoredDocument,
   getStoredDocument,
   listStoredDocuments,
   updateStoredDocument,
@@ -94,6 +96,28 @@ export async function updateDocument(
   }
 
   return document;
+}
+
+/** Deletes a document only when the current demo user is its owner. */
+export async function deleteDocument(
+  userId: string,
+  documentId: string,
+): Promise<void> {
+  const parsedDocumentId = parseDocumentId(documentId);
+  const document = await getStoredDocument(parsedDocumentId);
+
+  if (!document) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  if (!canDeleteDocument(document, userId)) {
+    throw new ApplicationError(
+      "FORBIDDEN",
+      "Only the document owner can delete this document",
+    );
+  }
+
+  await deleteStoredDocument(parsedDocumentId);
 }
 
 /** Imports text as structured paragraphs so the result is immediately editable. */

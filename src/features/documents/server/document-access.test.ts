@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   canAccessDocument,
+  canDeleteDocument,
   canManageSharing,
 } from "@/features/documents/server/document-access";
 
@@ -22,5 +23,10 @@ describe("document access", () => {
   it("allows only the owner to manage sharing", () => {
     expect(canManageSharing(document, "alice")).toBe(true);
     expect(canManageSharing(document, "bob")).toBe(false);
+  });
+
+  it("allows only the owner to delete a document", () => {
+    expect(canDeleteDocument(document, "alice")).toBe(true);
+    expect(canDeleteDocument(document, "bob")).toBe(false);
   });
 });

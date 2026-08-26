@@ -123,3 +123,8 @@ export async function addStoredDocumentShare(
 
   return serializeSnapshot(await reference.get());
 }
+
+/** Deletes one document; the service performs the ownership check first. */
+export async function deleteStoredDocument(documentId: string): Promise<void> {
+  await documents.doc(documentId).delete();
+}

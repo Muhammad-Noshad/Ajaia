@@ -16,3 +16,10 @@ export function canManageSharing(
 ): boolean {
   return document.ownerId === userId;
 }
+
+export function canDeleteDocument(
+  document: DocumentAccessRecord,
+  userId: string,
+): boolean {
+  return document.ownerId === userId;
+}

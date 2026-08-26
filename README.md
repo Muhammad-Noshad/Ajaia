@@ -50,7 +50,8 @@ button remains available for immediate persistence and displays the latest save
 time or a retry-needed state when saving fails. The editor footer also shows
 live word and character counts, and the Outline control provides navigation for
 documents with headings. The Export menu downloads Markdown directly or opens a
-clean print view for saving the current editor content as PDF.
+clean print view for saving the current editor content as PDF. Document owners
+can permanently delete their documents after confirmation; shared users cannot.
 
 Open [http://localhost:3000](http://localhost:3000).
 

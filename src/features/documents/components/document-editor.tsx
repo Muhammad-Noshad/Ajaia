@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ListTree, Loader2, Save, Share2 } from "lucide-react";
+import { Check, ListTree, Loader2, Save, Share2, Trash2 } from "lucide-react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import { Markdown } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DocumentOutline } from "@/features/documents/components/document-outline";
+import { DeleteDocumentDialog } from "@/features/documents/components/delete-document-dialog";
 import { DocumentToolbar } from "@/features/documents/components/document-toolbar";
 import { ExportMenu } from "@/features/documents/components/export-menu";
 import type { DocumentView } from "@/features/documents/document.types";
@@ -18,6 +19,7 @@ type DocumentEditorProps = {
   currentUserId: string;
   onSaved: (document: DocumentView) => void;
   onShare: () => void;
+  onDeleted: (documentId: string) => void;
 };
 
 type SaveOptions = {
@@ -91,12 +93,14 @@ export function DocumentEditor({
   document,
   onSaved,
   onShare,
+  onDeleted,
 }: DocumentEditorProps) {
   const [title, setTitle] = useState(document.title);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [changeVersion, setChangeVersion] = useState(0);
   const [lastSavedAt, setLastSavedAt] = useState(
     () => new Date(document.updatedAt),
@@ -225,6 +229,18 @@ export function DocumentEditor({
     setSaveError(null);
   }
 
+  function openDeleteDialog() {
+    // A pending autosave is no longer useful once the user has chosen to
+    // remove the document. Clearing it prevents a delayed write from racing
+    // with the DELETE request while the confirmation modal is open.
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+
+    setIsDeleteDialogOpen(true);
+  }
+
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card print:block print:h-auto print:overflow-visible">
       <header className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-6 print:block print:border-0 print:px-0 print:py-0">
@@ -262,10 +278,22 @@ export function DocumentEditor({
             )}
           </span>
           {document.ownerId === currentUserId ? (
-            <Button onClick={onShare} type="button" variant="outline">
-              <Share2 aria-hidden="true" />
-              Share
-            </Button>
+            <>
+              <Button onClick={onShare} type="button" variant="outline">
+                <Share2 aria-hidden="true" />
+                Share
+              </Button>
+              <Button
+                disabled={isSaving}
+                onClick={openDeleteDialog}
+                title={isSaving ? "Wait for saving to finish" : "Delete document"}
+                type="button"
+                variant="outline"
+              >
+                <Trash2 aria-hidden="true" />
+                Delete
+              </Button>
+            </>
           ) : null}
           <Button
             aria-pressed={isOutlineOpen}
@@ -315,6 +343,13 @@ export function DocumentEditor({
         <span>{editorStats.words.toLocaleString()} words</span>
         <span>{editorStats.characters.toLocaleString()} characters</span>
       </footer>
+      {isDeleteDialogOpen ? (
+        <DeleteDocumentDialog
+          document={document}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onDeleted={onDeleted}
+        />
+      ) : null}
     </section>
   );
 }

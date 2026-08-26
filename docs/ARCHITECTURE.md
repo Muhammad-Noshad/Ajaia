@@ -4,8 +4,8 @@
 
 Ajaia Docs is a focused document workspace for the assessment. It supports
 persisted rich-text documents, text/Markdown import, and demonstrable sharing
-between fixed demo users. It intentionally does not implement real-time
-co-editing or production authentication.
+between fixed demo users, and owner-controlled deletion. It intentionally does
+not implement real-time co-editing or production authentication.
 
 ## Data flow
 
@@ -54,7 +54,7 @@ Route Handlers live under `src/app/api`:
 | Route | Responsibility |
 | --- | --- |
 | `GET/POST /api/documents` | List accessible documents and create a document |
-| `GET/PUT /api/documents/:id` | Read or save an accessible document |
+| `GET/PUT/DELETE /api/documents/:id` | Read/save an accessible document; delete is owner-only |
 | `POST /api/documents/:id/share` | Owner-only access grant |
 | `POST /api/documents/import` | Validate and import `.txt`/`.md` text |
 | `GET/POST /api/session` | Read or set the demo-user cookie |

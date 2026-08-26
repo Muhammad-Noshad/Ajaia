@@ -163,6 +163,18 @@ export function DocumentWorkspace() {
     );
   }
 
+  function handleDeleted(documentId: string) {
+    const nextDocument = documents.find((document) => document.id !== documentId);
+
+    setDocuments((currentDocuments) =>
+      currentDocuments.filter((document) => document.id !== documentId),
+    );
+    setSelectedDocumentId((currentId) =>
+      currentId === documentId ? nextDocument?.id ?? null : currentId,
+    );
+    setShareDocumentId(null);
+  }
+
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-background print:h-auto print:overflow-visible">
       <header className="flex shrink-0 items-center gap-3 border-b border-border px-5 py-4 sm:px-8 print:hidden">
@@ -215,6 +227,7 @@ export function DocumentWorkspace() {
               document={selectedDocument}
               key={selectedDocument.id}
               onSaved={handleSaved}
+              onDeleted={handleDeleted}
               onShare={() => setShareDocumentId(selectedDocument.id)}
             />
           ) : (
