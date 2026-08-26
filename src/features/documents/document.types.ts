@@ -1,7 +1,7 @@
 import type { RichTextContent } from "@/features/documents/document.schema";
 
 // This is the transport-safe shape shared by server services and client UI.
-// It contains no Mongoose document methods or database-specific objects.
+// It contains no Firestore snapshots, timestamps, or other server objects.
 export type DocumentView = {
   id: string;
   title: string;

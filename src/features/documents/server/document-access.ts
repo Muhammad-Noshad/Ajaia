@@ -16,9 +16,3 @@ export function canManageSharing(
 ): boolean {
   return document.ownerId === userId;
 }
-
-export function accessibleDocumentFilter(userId: string) {
-  return {
-    $or: [{ ownerId: userId }, { sharedWith: userId }],
-  };
-}

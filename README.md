@@ -9,7 +9,7 @@ and text/Markdown import without pretending to implement Google Docs in full.
 - Next.js App Router with TypeScript and Tailwind CSS
 - shadcn/ui (Base UI/Nova preset) and Lucide React
 - React Hook Form, Zod, and `@hookform/resolvers`
-- Mongoose/MongoDB and Sonner notifications
+- Firebase Cloud Firestore with Firebase Admin and Sonner notifications
 - Tiptap rich-text editing (history, links, headings, lists, blockquotes, code
   blocks, and dividers) and Vitest access-rule tests
 
@@ -21,9 +21,26 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Set `MONGODB_URI` in `.env.local` to a reachable local MongoDB or MongoDB Atlas
-instance. The application uses three demo users selected from the workspace
-header; this is mocked assessment authentication, not production auth.
+Set `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` in
+`.env.local` using a Firebase service-account key. Create the Firestore database
+in Firebase Console before starting the app. The application uses three demo
+users selected from the workspace header; this is mocked assessment
+authentication, not production auth.
+
+### Firebase credentials
+
+1. Create or open a project at [Firebase Console](https://console.firebase.google.com/).
+2. Open **Build -> Firestore Database** and create the database in Native mode.
+3. Open **Project settings -> Service accounts**, choose **Generate new private
+   key**, and download the JSON file privately.
+4. Copy these JSON fields into `.env.local`:
+
+   - `project_id` -> `FIREBASE_PROJECT_ID`
+   - `client_email` -> `FIREBASE_CLIENT_EMAIL`
+   - `private_key` -> `FIREBASE_PRIVATE_KEY`
+
+   Keep the private key out of Git. In `.env.local`, preserve its line breaks or
+   encode each line break as `\\n`; the server normalizes the encoded form.
 
 The import flow supports `.txt` and `.md` files up to 1 MB. Files are converted
 into new editable documents and the original binary is not stored.
@@ -53,13 +70,13 @@ Routing lives under `src/app`. Document behavior belongs under
 `src/features/documents` and follows this path:
 
 ```text
-Route Handler -> Service -> Mongoose Model -> MongoDB
+Route Handler -> Service -> Firestore store -> Cloud Firestore
 ```
 
 Shared visual primitives live in `src/components/ui`, application-wide layout
 components in `src/components/layout`, and cross-cutting server utilities in
-`src/lib`. The MongoDB helper in `src/lib/db.ts` caches the connection for
-Next.js development reloads.
+`src/lib`. The Firebase Admin helper in `src/lib/firestore.ts` reuses the
+initialized app across Next.js development reloads.
 
 The document editor stores Tiptap JSON, while sharing stores stable demo-user
 IDs on each document. Shared users can edit; only owners can grant access.

@@ -1,7 +1,4 @@
-import { Types } from "mongoose";
-
 import { ApplicationError } from "@/lib/application-error";
-import { connectDB } from "@/lib/db";
 import type { DocumentView } from "@/features/documents/document.types";
 import {
   createDocumentSchema,
@@ -14,31 +11,17 @@ import {
   type UpdateDocumentInput,
 } from "@/features/documents/document.schema";
 import {
-  accessibleDocumentFilter,
+  canAccessDocument,
   canManageSharing,
 } from "@/features/documents/server/document-access";
-import { DocumentModel } from "@/features/documents/server/document.model";
+import {
+  addStoredDocumentShare,
+  createStoredDocument,
+  getStoredDocument,
+  listStoredDocuments,
+  updateStoredDocument,
+} from "@/features/documents/server/document.store";
 import { getDemoUser } from "@/features/session/demo-users";
-
-function serializeDocument(document: {
-  _id: Types.ObjectId;
-  title: string;
-  content: unknown;
-  ownerId: string;
-  sharedWith: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}): DocumentView {
-  return {
-    id: document._id.toString(),
-    title: document.title,
-    content: document.content as RichTextContent,
-    ownerId: document.ownerId,
-    sharedWith: document.sharedWith,
-    createdAt: document.createdAt.toISOString(),
-    updatedAt: document.updatedAt.toISOString(),
-  };
-}
 
 function parseDocumentId(documentId: string): string {
   documentIdSchema.parse(documentId);
@@ -57,13 +40,7 @@ function textToRichText(text: string): RichTextContent {
 
 /** Lists documents the current demo user owns or has been granted access to. */
 export async function listDocuments(userId: string): Promise<DocumentView[]> {
-  await connectDB();
-
-  const documents = await DocumentModel.find(accessibleDocumentFilter(userId))
-    .sort({ updatedAt: -1 })
-    .exec();
-
-  return documents.map(serializeDocument);
+  return listStoredDocuments(userId);
 }
 
 /** Creates a persisted blank or imported document for the current user. */
@@ -72,14 +49,13 @@ export async function createDocument(
   input: CreateDocumentInput,
 ): Promise<DocumentView> {
   const parsedInput = createDocumentSchema.parse(input);
-  await connectDB();
-
-  const document = await DocumentModel.create({
-    ...parsedInput,
+  return createStoredDocument({
+    title: parsedInput.title,
+    // The recursive Zod schema validates this tree at runtime, while the
+    // transport type preserves the richer Tiptap JSON shape for TypeScript.
+    content: parsedInput.content as RichTextContent,
     ownerId: userId,
   });
-
-  return serializeDocument(document);
 }
 
 /** Returns a document only when the current user has access to it. */
@@ -88,18 +64,13 @@ export async function getDocument(
   documentId: string,
 ): Promise<DocumentView> {
   const parsedDocumentId = parseDocumentId(documentId);
-  await connectDB();
+  const document = await getStoredDocument(parsedDocumentId);
 
-  const document = await DocumentModel.findOne({
-    _id: parsedDocumentId,
-    ...accessibleDocumentFilter(userId),
-  }).exec();
-
-  if (!document) {
+  if (!document || !canAccessDocument(document, userId)) {
     throw new ApplicationError("NOT_FOUND", "Document not found");
   }
 
-  return serializeDocument(document);
+  return document;
 }
 
 /** Saves title/content for an owned or shared document. */
@@ -110,22 +81,19 @@ export async function updateDocument(
 ): Promise<DocumentView> {
   const parsedDocumentId = parseDocumentId(documentId);
   const parsedInput = updateDocumentSchema.parse(input);
-  await connectDB();
+  const existing = await getStoredDocument(parsedDocumentId);
 
-  const document = await DocumentModel.findOneAndUpdate(
-    {
-      _id: parsedDocumentId,
-      ...accessibleDocumentFilter(userId),
-    },
-    parsedInput,
-    { new: true, runValidators: true },
-  ).exec();
+  if (!existing || !canAccessDocument(existing, userId)) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
+  }
+
+  const document = await updateStoredDocument(parsedDocumentId, parsedInput);
 
   if (!document) {
     throw new ApplicationError("NOT_FOUND", "Document not found");
   }
 
-  return serializeDocument(document);
+  return document;
 }
 
 /** Imports text as structured paragraphs so the result is immediately editable. */
@@ -154,8 +122,7 @@ export async function shareDocument(
     throw new ApplicationError("INVALID_INPUT", "Unknown demo user");
   }
 
-  await connectDB();
-  const document = await DocumentModel.findById(parsedDocumentId).exec();
+  const document = await getStoredDocument(parsedDocumentId);
 
   if (!document) {
     throw new ApplicationError("NOT_FOUND", "Document not found");
@@ -175,10 +142,14 @@ export async function shareDocument(
     );
   }
 
-  if (!document.sharedWith.includes(targetUserId)) {
-    document.sharedWith.push(targetUserId);
-    await document.save();
+  const updatedDocument = await addStoredDocumentShare(
+    parsedDocumentId,
+    targetUserId,
+  );
+
+  if (!updatedDocument) {
+    throw new ApplicationError("NOT_FOUND", "Document not found");
   }
 
-  return serializeDocument(document);
+  return updatedDocument;
 }

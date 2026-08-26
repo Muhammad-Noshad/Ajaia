@@ -36,7 +36,7 @@ AI-generated code was checked with:
 - ESLint
 - TypeScript compilation
 - Next.js production builds when the development server is stopped
-- Live API smoke tests against the configured MongoDB
+- Live API smoke tests against the configured Cloud Firestore database
 - Manual reviewer-flow testing before submission
 
 Before submitting, update this note with any additional AI suggestions that were

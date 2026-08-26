@@ -13,12 +13,12 @@ co-editing or production authentication.
 Client workspace
   -> Route Handler (parse, validate, resolve demo user, format response)
   -> Document service (business rules and access checks)
-  -> Mongoose model
-  -> MongoDB
+  -> Firestore store
+  -> Cloud Firestore
 ```
 
 The browser owns transient editor state, selected-document state, and request
-feedback. MongoDB owns persisted title/content/ownership/sharing. A successful
+feedback. Cloud Firestore owns persisted title/content/ownership/sharing. A successful
 mutation replaces the client record with the server response, so the UI does not
 pretend a save succeeded before persistence completes.
 
@@ -68,10 +68,10 @@ known failures into safe JSON responses while logging unexpected failures.
 Each document contains:
 
 - `title`: trimmed string, maximum 120 characters
-- `content`: Tiptap JSON stored as Mongoose `Mixed`
+- `content`: Tiptap JSON stored as a Firestore map/array value
 - `ownerId`: fixed demo-user ID
 - `sharedWith`: array of fixed demo-user IDs
-- Mongoose `createdAt` and `updatedAt` timestamps
+- Firestore `createdAt` and `updatedAt` timestamps
 
 Accessible documents satisfy `ownerId == currentUser` or
 `sharedWith` containing `currentUser`. Only the owner can grant access; shared
@@ -87,13 +87,13 @@ users can edit because the assignment does not define read-only permissions.
   optional; last successful save wins if two users edit concurrently.
 - Tiptap is used instead of a custom `contentEditable` editor to make formatting
   behavior reliable within the assessment timebox.
-- No repository/controller layer exists because the service and model boundaries
-  remain readable at the current complexity.
+- The Firestore store is intentionally small; it keeps persistence details out
+  of the service without adding a generic repository abstraction.
 
 ## Verification
 
-- Vitest covers ownership/shared access predicates and query filtering.
+- Vitest covers ownership/shared access predicates.
 - ESLint and TypeScript are run after each implementation slice.
 - Manual verification covers create/edit/save/reload, formatting persistence,
   import validation, sharing, user switching, and unauthorized access.
-- Deployment verification must repeat the reviewer flow against Atlas/Vercel.
+- Deployment verification must repeat the reviewer flow against Firestore/Vercel.

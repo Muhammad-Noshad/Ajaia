@@ -38,7 +38,9 @@ export const documentTitleSchema = z.string().trim().min(1).max(120);
 
 export const documentIdSchema = z
   .string()
-  .regex(/^[a-f\d]{24}$/i, "Invalid document id");
+  .trim()
+  .min(1, "Invalid document id")
+  .max(150, "Invalid document id");
 
 export const createDocumentSchema = z.object({
   title: documentTitleSchema,

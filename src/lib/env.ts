@@ -1,27 +1,31 @@
 import { z } from "zod";
 
 // This module is the single boundary for server environment configuration. It
-// fails during server startup/use so missing infrastructure is visible instead
-// of becoming a confusing database error later in a request.
+// validates the Firebase Admin credential parts before a request reaches the
+// persistence layer, which makes deployment mistakes actionable.
 const envSchema = z.object({
-  MONGODB_URI: z
+  FIREBASE_PROJECT_ID: z
     .string()
     .trim()
-    .min(1, "MONGODB_URI is required")
-    .refine(
-      (value) =>
-        value.startsWith("mongodb://") || value.startsWith("mongodb+srv://"),
-      "MONGODB_URI must use the mongodb:// or mongodb+srv:// scheme",
-    ),
+    .min(1, "FIREBASE_PROJECT_ID is required"),
+  FIREBASE_CLIENT_EMAIL: z
+    .string()
+    .trim()
+    .email("FIREBASE_CLIENT_EMAIL must be a valid service-account email"),
+  FIREBASE_PRIVATE_KEY: z
+    .string()
+    .min(1, "FIREBASE_PRIVATE_KEY is required"),
 });
 
 const parsedEnv = envSchema.safeParse({
-  MONGODB_URI: process.env.MONGODB_URI,
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL,
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY,
 });
 
 if (!parsedEnv.success) {
   const details = parsedEnv.error.issues
-    .map((issue) => `${issue.path.join(".") || "MONGODB_URI"}: ${issue.message}`)
+    .map((issue) => `${issue.path.join(".") || "environment"}: ${issue.message}`)
     .join("; ");
 
   throw new Error(`Invalid environment configuration: ${details}`);
